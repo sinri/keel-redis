@@ -1,4 +1,4 @@
-package io.github.sinri.keel.integration.redis.mixin;
+package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
 import io.vertx.redis.client.Redis;

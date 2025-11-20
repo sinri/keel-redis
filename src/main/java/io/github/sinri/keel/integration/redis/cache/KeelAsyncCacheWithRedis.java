@@ -1,7 +1,8 @@
-package io.github.sinri.keel.integration.redis;
+package io.github.sinri.keel.integration.redis.cache;
 
 import io.github.sinri.keel.core.cache.KeelAsyncCacheInterface;
 import io.github.sinri.keel.core.cache.NotCached;
+import io.github.sinri.keel.integration.redis.kit.RedisKit;
 import io.vertx.core.Future;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

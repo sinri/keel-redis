@@ -1,7 +1,6 @@
-package io.github.sinri.keel.integration.redis;
+package io.github.sinri.keel.integration.redis.kit;
 
 import io.github.sinri.keel.base.configuration.ConfigElement;
-import io.github.sinri.keel.integration.redis.mixin.*;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisOptions;
 import org.jetbrains.annotations.NotNull;
