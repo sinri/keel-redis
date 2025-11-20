@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Redis Hash commands implementation.
- * This class is fulfilled with version 4.0.12 through AI Coding.
+ * Redis API 调用中 Hash 相关的 Mixin。
+ *
+ * @since 5.0.0
  */
 public interface RedisHashMixin extends RedisApiMixin {
     /**
@@ -38,7 +39,8 @@ public interface RedisHashMixin extends RedisApiMixin {
      * @return 如果存在返回 true，不存在返回 false。
      */
     default Future<Boolean> existsHashField(String key, String field) {
-        return api(api -> api.hexists(key, field).compose(response -> Future.succeededFuture(response.toInteger() == 1)));
+        return api(api -> api.hexists(key, field)
+                             .compose(response -> Future.succeededFuture(response.toInteger() == 1)));
     }
 
     /**
@@ -91,7 +93,8 @@ public interface RedisHashMixin extends RedisApiMixin {
      * @return 执行 HINCRBY 命令之后，哈希表中字段的值。
      */
     default Future<Long> incrementHashField(String key, String field, long increment) {
-        return api(api -> api.hincrby(key, field, String.valueOf(increment)).compose(response -> Future.succeededFuture(response.toLong())));
+        return api(api -> api.hincrby(key, field, String.valueOf(increment))
+                             .compose(response -> Future.succeededFuture(response.toLong())));
     }
 
     /**
@@ -102,7 +105,8 @@ public interface RedisHashMixin extends RedisApiMixin {
      * @return 执行 HINCRBYFLOAT 命令之后，哈希表中字段的值。
      */
     default Future<Double> incrementHashFieldByFloat(String key, String field, double increment) {
-        return api(api -> api.hincrbyfloat(key, field, String.valueOf(increment)).compose(response -> Future.succeededFuture(Double.parseDouble(response.toString()))));
+        return api(api -> api.hincrbyfloat(key, field, String.valueOf(increment))
+                             .compose(response -> Future.succeededFuture(Double.parseDouble(response.toString()))));
     }
 
     /**
@@ -270,7 +274,8 @@ public interface RedisHashMixin extends RedisApiMixin {
      * @return 设置成功，返回 1。如果给定字段已经存在且没有操作被执行，返回 0。
      */
     default Future<Integer> setHashFieldIfNotExists(String key, String field, String value) {
-        return api(api -> api.hsetnx(key, field, value).compose(response -> Future.succeededFuture(response.toInteger())));
+        return api(api -> api.hsetnx(key, field, value)
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**

@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Redis Set commands implementation.
- * This class is fulfilled with version 4.0.12 through AI Coding.
+ * Redis API 调用中 Set 相关的 Mixin。
+ *
+ * @since 5.0.0
  */
 public interface RedisSetMixin extends RedisApiMixin {
     /**

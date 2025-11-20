@@ -3,15 +3,17 @@ package io.github.sinri.keel.integration.redis.mixin;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * @since 3.0.5
+ * Redis API 调用的基本 Mixin。
+ *
+ * @since 5.0.0
  */
 public interface RedisApiMixin {
     Redis getClient();
@@ -27,9 +29,8 @@ public interface RedisApiMixin {
      * @param <T>      The return type of the function executed with the RedisAPI
      *                 instance
      * @return A Future containing the result of the Redis command
-     * @since 4.0.12
      */
-    default <T> Future<T> api(@Nonnull Function<RedisAPI, Future<T>> function) {
+    default <T> Future<T> api(@NotNull Function<RedisAPI, Future<T>> function) {
         return Future.succeededFuture()
                      .compose(v -> this.getClient().connect())
                      .map(RedisAPI::api)
@@ -47,10 +48,10 @@ public interface RedisApiMixin {
      */
     default Future<Boolean> doesKeyExist(String key) {
         return api(api -> api.exists(List.of(key))
-                         .compose(response -> {
-                      Objects.requireNonNull(response);
-                      return Future.succeededFuture(response.toInteger() == 1);
-                  }));
+                             .compose(response -> {
+                                 Objects.requireNonNull(response);
+                                 return Future.succeededFuture(response.toInteger() == 1);
+                             }));
     }
 
     /**
@@ -62,10 +63,10 @@ public interface RedisApiMixin {
      */
     default Future<Integer> countExistedKeys(List<String> keys) {
         return api(api -> api.exists(keys)
-                         .compose(response -> {
-                      Objects.requireNonNull(response);
-                      return Future.succeededFuture(response.toInteger());
-                  }));
+                             .compose(response -> {
+                                 Objects.requireNonNull(response);
+                                 return Future.succeededFuture(response.toInteger());
+                             }));
     }
 
     /**
@@ -77,7 +78,7 @@ public interface RedisApiMixin {
      */
     default Future<Integer> deleteKeys(List<String> keys) {
         return api(api -> api.del(keys)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     default Future<Integer> deleteKey(String key) {
@@ -94,7 +95,7 @@ public interface RedisApiMixin {
      */
     default Future<Integer> unlinkKeys(List<String> keys) {
         return api(api -> api.unlink(keys)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     default Future<Integer> unlinkKey(String key) {
@@ -108,11 +109,11 @@ public interface RedisApiMixin {
      */
     default Future<ValueType> getValueTypeOfKey(String key) {
         return api(api -> api.type(key)
-                         .compose(response -> {
-                      Objects.requireNonNull(response);
-                      String x = response.toString();
-                      return Future.succeededFuture(ValueType.valueOf(x));
-                  }));
+                             .compose(response -> {
+                                 Objects.requireNonNull(response);
+                                 String x = response.toString();
+                                 return Future.succeededFuture(ValueType.valueOf(x));
+                             }));
     }
 
     /**
@@ -146,7 +147,7 @@ public interface RedisApiMixin {
      */
     default Future<Void> expire(String key, int seconds) {
         return api(api -> api.expire(List.of(key, String.valueOf(seconds)))
-                         .compose(response -> Future.succeededFuture()));
+                             .compose(response -> Future.succeededFuture()));
     }
 
     /**
@@ -158,7 +159,7 @@ public interface RedisApiMixin {
      */
     default Future<Void> expireAt(String key, int unixTimestampInSecond) {
         return api(api -> api.expireat(List.of(key, String.valueOf(unixTimestampInSecond)))
-                         .compose(response -> Future.succeededFuture()));
+                             .compose(response -> Future.succeededFuture()));
     }
 
     /**
@@ -167,7 +168,7 @@ public interface RedisApiMixin {
      */
     default Future<Void> expireInMillisecond(String key, long milliseconds) {
         return api(api -> api.pexpire(List.of(key, String.valueOf(milliseconds)))
-                         .compose(response -> Future.succeededFuture()));
+                             .compose(response -> Future.succeededFuture()));
     }
 
     /**
@@ -176,7 +177,7 @@ public interface RedisApiMixin {
      */
     default Future<Void> expireAtInMillisecond(String key, long unixTimestampInMilliseconds) {
         return api(api -> api.pexpireat(List.of(key, String.valueOf(unixTimestampInMilliseconds)))
-                         .compose(response -> Future.succeededFuture()));
+                             .compose(response -> Future.succeededFuture()));
     }
 
     /**
@@ -185,15 +186,15 @@ public interface RedisApiMixin {
      */
     default Future<Long> getTTLInMillisecond(String key) {
         return api(api -> api.pttl(key)
-                         .compose(response -> {
-                      var ttl = response.toLong();
-                      if (ttl < 0) {
-                          // Redis 2.6 之前的版本如果 key 不存在或者 key 没有关联超时时间则返回 -1 。
-                          // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
-                          return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
-                      }
-                      return Future.succeededFuture();
-                  }));
+                             .compose(response -> {
+                                 var ttl = response.toLong();
+                                 if (ttl < 0) {
+                                     // Redis 2.6 之前的版本如果 key 不存在或者 key 没有关联超时时间则返回 -1 。
+                                     // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
+                                     return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
+                                 }
+                                 return Future.succeededFuture();
+                             }));
     }
 
     /**
@@ -202,15 +203,15 @@ public interface RedisApiMixin {
      */
     default Future<Long> getTTLInSecond(String key) {
         return api(api -> api.ttl(key)
-                         .compose(response -> {
-                      var ttl = response.toLong();
-                      if (ttl < 0) {
-                          // Redis 2.6 之前的版本如果 key 不存在或者 key 没有关联超时时间则返回 -1 。
-                          // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
-                          return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
-                      }
-                      return Future.succeededFuture();
-                  }));
+                             .compose(response -> {
+                                 var ttl = response.toLong();
+                                 if (ttl < 0) {
+                                     // Redis 2.6 之前的版本如果 key 不存在或者 key 没有关联超时时间则返回 -1 。
+                                     // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
+                                     return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
+                                 }
+                                 return Future.succeededFuture();
+                             }));
     }
 
     /**
@@ -288,10 +289,6 @@ public interface RedisApiMixin {
         return api(api -> api.touch(keys).compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
-    enum ValueType {
-        string, list, set, zset, hash, stream, none
-    }
-
     /**
      * DUMP key
      * Redis DUMP 命令用于序列化给定 key ，并返回被序列化的值。
@@ -300,12 +297,12 @@ public interface RedisApiMixin {
      */
     default Future<byte[]> dump(String key) {
         return api(api -> api.dump(key)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toBytes());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toBytes());
+                             }));
     }
 
     /**
@@ -393,7 +390,7 @@ public interface RedisApiMixin {
      */
     default Future<Boolean> move(String key, int db) {
         return api(api -> api.move(key, String.valueOf(db))
-                         .compose(response -> Future.succeededFuture(response.toInteger() == 1)));
+                             .compose(response -> Future.succeededFuture(response.toInteger() == 1)));
     }
 
     /**
@@ -408,42 +405,42 @@ public interface RedisApiMixin {
      */
     default Future<String> objectEncoding(String key) {
         return api(api -> api.object(List.of("ENCODING", key))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     default Future<Long> objectRefcount(String key) {
         return api(api -> api.object(List.of("REFCOUNT", key))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toLong());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toLong());
+                             }));
     }
 
     default Future<Long> objectIdletime(String key) {
         return api(api -> api.object(List.of("IDLETIME", key))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toLong());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toLong());
+                             }));
     }
 
     default Future<Long> objectFreq(String key) {
         return api(api -> api.object(List.of("FREQ", key))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toLong());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toLong());
+                             }));
     }
 
     /**
@@ -546,7 +543,7 @@ public interface RedisApiMixin {
      */
     default Future<Integer> wait(int numReplicas, int timeout) {
         return api(api -> api.wait(String.valueOf(numReplicas), String.valueOf(timeout))
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -589,12 +586,12 @@ public interface RedisApiMixin {
      */
     default Future<String> getdel(String key) {
         return api(api -> api.getdel(key)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -641,12 +638,12 @@ public interface RedisApiMixin {
     @Deprecated(since = "4.1.0")
     default Future<String> getset(String key, String value) {
         return api(api -> api.getset(key, value)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -785,7 +782,7 @@ public interface RedisApiMixin {
      */
     default Future<Long> clientId() {
         return api(api -> api.client(List.of("ID"))
-                         .compose(response -> Future.succeededFuture(response.toLong())));
+                             .compose(response -> Future.succeededFuture(response.toLong())));
     }
 
     /**
@@ -796,7 +793,7 @@ public interface RedisApiMixin {
      */
     default Future<String> clientInfo() {
         return api(api -> api.client(List.of("INFO"))
-                         .compose(response -> Future.succeededFuture(response.toString())));
+                             .compose(response -> Future.succeededFuture(response.toString())));
     }
 
     /**
@@ -827,13 +824,13 @@ public interface RedisApiMixin {
      */
     default Future<Void> clientSetname(String connectionName) {
         return api(api -> api.client(List.of("SETNAME", connectionName))
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
     }
 
     /**
@@ -844,12 +841,12 @@ public interface RedisApiMixin {
      */
     default Future<String> clientGetname() {
         return api(api -> api.client(List.of("GETNAME"))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -860,7 +857,7 @@ public interface RedisApiMixin {
      */
     default Future<Long> dbsize() {
         return api(api -> api.dbsize()
-                         .compose(response -> Future.succeededFuture(response.toLong())));
+                             .compose(response -> Future.succeededFuture(response.toLong())));
     }
 
     /**
@@ -933,13 +930,13 @@ public interface RedisApiMixin {
      */
     default Future<Void> save() {
         return api(api -> api.save()
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
     }
 
     /**
@@ -970,13 +967,13 @@ public interface RedisApiMixin {
      */
     default Future<Void> multi() {
         return api(api -> api.multi()
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
     }
 
     /**
@@ -988,31 +985,31 @@ public interface RedisApiMixin {
      */
     default Future<List<Object>> exec() {
         return api(api -> api.exec()
-                         .compose(response -> {
-                      if (response == null) {
-                          // 事务被打断
-                          return Future.failedFuture(new RuntimeException("事务被打断"));
-                      }
+                             .compose(response -> {
+                                 if (response == null) {
+                                     // 事务被打断
+                                     return Future.failedFuture(new RuntimeException("事务被打断"));
+                                 }
 
-                      List<Object> results = new ArrayList<>();
-                      response.forEach(item -> {
-                          if (item == null) {
-                              results.add(null);
-                          } else if (item.type() == io.vertx.redis.client.ResponseType.NUMBER) {
-                              results.add(item.toLong());
-                          } else if (item.type() == io.vertx.redis.client.ResponseType.BULK) {
-                              results.add(item.toString());
-                          } else if (item.type() == io.vertx.redis.client.ResponseType.MULTI) {
-                              List<String> multiResults = new ArrayList<>();
-                              item.forEach(subItem -> multiResults.add(subItem.toString()));
-                              results.add(multiResults);
-                          } else {
-                              results.add(item.toString());
-                          }
-                      });
+                                 List<Object> results = new ArrayList<>();
+                                 response.forEach(item -> {
+                                     if (item == null) {
+                                         results.add(null);
+                                     } else if (item.type() == io.vertx.redis.client.ResponseType.NUMBER) {
+                                         results.add(item.toLong());
+                                     } else if (item.type() == io.vertx.redis.client.ResponseType.BULK) {
+                                         results.add(item.toString());
+                                     } else if (item.type() == io.vertx.redis.client.ResponseType.MULTI) {
+                                         List<String> multiResults = new ArrayList<>();
+                                         item.forEach(subItem -> multiResults.add(subItem.toString()));
+                                         results.add(multiResults);
+                                     } else {
+                                         results.add(item.toString());
+                                     }
+                                 });
 
-                      return Future.succeededFuture(results);
-                  }));
+                                 return Future.succeededFuture(results);
+                             }));
     }
 
     /**
@@ -1023,13 +1020,13 @@ public interface RedisApiMixin {
      */
     default Future<Void> discard() {
         return api(api -> api.discard()
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
     }
 
     /**
@@ -1041,13 +1038,13 @@ public interface RedisApiMixin {
      */
     default Future<Void> watch(List<String> keys) {
         return api(api -> api.watch(keys)
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
     }
 
     /**
@@ -1058,13 +1055,17 @@ public interface RedisApiMixin {
      */
     default Future<Void> unwatch() {
         return api(api -> api.unwatch()
-                         .compose(response -> {
-                      if ("OK".equals(response.toString())) {
-                          return Future.succeededFuture();
-                      } else {
-                          return Future.failedFuture(new RuntimeException(response.toString()));
-                      }
-                  }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException(response.toString()));
+                                 }
+                             }));
+    }
+
+    enum ValueType {
+        string, list, set, zset, hash, stream, none
     }
 
     class ScanResult {

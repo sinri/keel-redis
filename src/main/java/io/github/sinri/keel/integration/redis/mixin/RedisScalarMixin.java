@@ -5,8 +5,11 @@ import io.vertx.core.Future;
 import java.util.*;
 
 /**
- * @since 3.0.5
- *         在本类中，String属于Scalar，但Scalar可以被解释成数字甚至bitmap。
+ * Redis API 调用中 Scalar 相关的 Mixin。
+ * <p>
+ * String属于Scalar，但Scalar可以被解释成数字甚至bitmap。
+ *
+ * @since 5.0.0
  */
 public interface RedisScalarMixin extends RedisApiMixin {
     default Future<Void> setScalarToKeyForSeconds(String key, String value, Integer exInSecond) {

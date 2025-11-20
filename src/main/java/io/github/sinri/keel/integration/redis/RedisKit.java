@@ -1,17 +1,21 @@
 package io.github.sinri.keel.integration.redis;
 
-import io.github.sinri.keel.facade.configuration.KeelConfigElement;
+import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.integration.redis.mixin.*;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisOptions;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Objects;
 
-import static io.github.sinri.keel.facade.KeelInstance.Keel;
+import static io.github.sinri.keel.base.KeelInstance.Keel;
+
 
 /**
- * @since 3.0.5
+ * Redis API 工具
+ *
+ * @since 5.0.0
  */
 public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin, RedisHashMixin, RedisSetMixin,
         RedisOrderedSetMixin {
@@ -50,7 +54,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
      * redis.INSTANCE_NAME.poolCleanerInterval=5000<br/>
      * </p>
      */
-    private static class RedisConfig extends KeelConfigElement {
+    private static class RedisConfig extends ConfigElement {
 
         /**
          * Constructs a RedisConfig instance from an existing configuration element.
@@ -58,7 +62,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          * @param another The source configuration element to copy from
          * @throws NullPointerException If another is null
          */
-        public RedisConfig(@Nonnull KeelConfigElement another) {
+        public RedisConfig(@NotNull ConfigElement another) {
             super(another);
         }
 
@@ -69,9 +73,9 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          * @return The Redis connection URL
          * @throws NullPointerException If the URL is not configured
          */
-        @Nonnull
+        @NotNull
         public String getUrl() {
-            return Objects.requireNonNull(readString("url", null));
+            return Objects.requireNonNull(readString(List.of("url"), null));
         }
 
         /**
@@ -85,7 +89,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          * @return The maximum pool size, defaults to 16 if not specified
          */
         public int getMaxPoolSize() {
-            return readInteger("maxPoolSize", 16);
+            return readInteger(List.of("maxPoolSize"), 16);
         }
 
         /**
@@ -99,7 +103,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          *         specified
          */
         public int getMaxWaitingHandlers() {
-            return readInteger("maxWaitingHandlers", 32);
+            return readInteger(List.of("maxWaitingHandlers"), 32);
         }
 
         /**
@@ -114,7 +118,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          *         specified
          */
         public int getMaxPoolWaiting() {
-            return readInteger("maxPoolWaiting", 24);
+            return readInteger(List.of("maxPoolWaiting"), 24);
         }
 
         /**
@@ -128,7 +132,7 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
          *         specified
          */
         public int getPoolCleanerInterval() {
-            return readInteger("poolCleanerInterval", 5000);
+            return readInteger(List.of("poolCleanerInterval"), 5000);
         }
 
         /**

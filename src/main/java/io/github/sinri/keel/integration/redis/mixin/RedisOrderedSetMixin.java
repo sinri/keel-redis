@@ -7,6 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Redis API 调用中 Ordered Set 相关的 Mixin。
+ *
+ * @since 5.0.0
+ */
 public interface RedisOrderedSetMixin extends RedisApiMixin {
 
     /**
@@ -78,7 +83,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> getOrderedSetSize(String key) {
         return api(api -> api.zcard(key)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -93,7 +98,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> countOrderedSetElementsInScoreRange(String key, String min, String max) {
         return api(api -> api.zcount(key, min, max)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -109,7 +114,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Double> incrementOrderedSetMemberScore(String key, double increment, String member) {
         return api(api -> api.zincrby(key, String.valueOf(increment), member)
-                         .compose(response -> Future.succeededFuture(Double.parseDouble(response.toString()))));
+                             .compose(response -> Future.succeededFuture(Double.parseDouble(response.toString()))));
     }
 
     /**
@@ -200,7 +205,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> countOrderedSetElementsInLexRange(String key, String min, String max) {
         return api(api -> api.zlexcount(key, min, max)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -399,12 +404,12 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> getOrderedSetMemberRank(String key, String member) {
         return api(api -> api.zrank(key, member)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toInteger());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toInteger());
+                             }));
     }
 
     /**
@@ -444,7 +449,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> removeOrderedSetRangeByLex(String key, String min, String max) {
         return api(api -> api.zremrangebylex(key, min, max)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -459,7 +464,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> removeOrderedSetRangeByRank(String key, long start, long stop) {
         return api(api -> api.zremrangebyrank(key, String.valueOf(start), String.valueOf(stop))
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -473,7 +478,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> removeOrderedSetRangeByScore(String key, String min, String max) {
         return api(api -> api.zremrangebyscore(key, min, max)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -591,12 +596,12 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Integer> getOrderedSetMemberReverseRank(String key, String member) {
         return api(api -> api.zrevrank(key, member)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toInteger());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toInteger());
+                             }));
     }
 
     /**
@@ -623,12 +628,12 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      */
     default Future<Double> getOrderedSetMemberScore(String key, String member) {
         return api(api -> api.zscore(key, member)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(Double.parseDouble(response.toString()));
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(Double.parseDouble(response.toString()));
+                             }));
     }
 
     /**

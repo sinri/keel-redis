@@ -8,7 +8,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class is fulfilled with version 4.0.12 through AI Coding.
+ * Redis API 调用中 Bit 相关的 Mixin。
+ *
+ * @since 5.0.0
  */
 public interface RedisBitMixin extends RedisApiMixin {
     /**
@@ -248,7 +250,8 @@ public interface RedisBitMixin extends RedisApiMixin {
      * @return 字符串在 offset 处的bit，当 offset 超出了字符串长度的时候，这个字符串就被假定为由0比特填充的连续空间
      */
     default Future<Integer> getBit(String key, long offset) {
-        return api(api -> api.getbit(key, String.valueOf(offset)).compose(response -> Future.succeededFuture(response.toInteger())));
+        return api(api -> api.getbit(key, String.valueOf(offset))
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -262,6 +265,6 @@ public interface RedisBitMixin extends RedisApiMixin {
      */
     default Future<Integer> setBit(String key, long offset, int value) {
         return api(api -> api.setbit(key, String.valueOf(offset), String.valueOf(value))
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 }

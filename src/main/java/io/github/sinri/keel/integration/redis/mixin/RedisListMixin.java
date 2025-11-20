@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @since 3.0.5
+ * Redis API 调用中 List 相关的 Mixin。
+ *
+ * @since 5.0.0
  */
 public interface RedisListMixin extends RedisApiMixin {
 
@@ -77,7 +79,7 @@ public interface RedisListMixin extends RedisApiMixin {
      * 与 LPUSH 相反，当 key 不存在的时候不会进行任何操作。
      *
      * @return 执行push操作后列表list的长度。
-     * REDIS &gt;= 4.0: 支持一次插入多个值。老版本一次只能插入一个值。
+     *         REDIS &gt;= 4.0: 支持一次插入多个值。老版本一次只能插入一个值。
      */
     default Future<Integer> pushToExistedListHead(String key, List<String> elements) {
         return api(api -> {
@@ -136,20 +138,21 @@ public interface RedisListMixin extends RedisApiMixin {
 
     /**
      * LTRIM key start stop
-     * Redis LTRIM 用于修剪(trim)一个已存在的 list，这样 list 就会只包含指定范围的指定元素。start 和 stop 都是由0开始计数的， 这里的 0 是列表里的第一个元素（表头），1 是第二个元素，以此类推。
+     * Redis LTRIM 用于修剪(trim)一个已存在的 list，这样 list 就会只包含指定范围的指定元素。start 和 stop 都是由0开始计数的， 这里的 0 是列表里的第一个元素（表头），1
+     * 是第二个元素，以此类推。
      * start 和 end 也可以用负数来表示与表尾的偏移量，比如 -1 表示列表里的最后一个元素， -2 表示倒数第二个，等等。
      * 超过范围的下标并不会产生错误：如果 start 超过列表尾部，或者 start &gt; end，结果会是列表变成空表（即该 key 会被移除）。 如果 end 超过列表尾部，Redis 会将其当作列表的最后一个元素。
      */
     default Future<Void> trimList(String key, int start, int stop) {
         return api(api -> api.ltrim(key, String.valueOf(start), String.valueOf(stop))
-                         .compose(response -> {
-                    Objects.requireNonNull(response);
-                    if (Objects.equals("OK", response.toString())) {
-                        return Future.succeededFuture();
-                    } else {
-                        return Future.failedFuture(new RuntimeException("NOT OK but " + response));
-                    }
-                }));
+                             .compose(response -> {
+                                 Objects.requireNonNull(response);
+                                 if (Objects.equals("OK", response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException("NOT OK but " + response));
+                                 }
+                             }));
     }
 
     /**
@@ -161,29 +164,30 @@ public interface RedisListMixin extends RedisApiMixin {
      */
     default Future<List<String>> fetchListWithRange(String key, int start, int stop) {
         return api(api -> api.lrange(key, String.valueOf(start), String.valueOf(stop))
-                         .compose(response -> {
-                    List<String> list = new ArrayList<>();
-                    response.forEach(response1 -> list.add(response1.toString()));
+                             .compose(response -> {
+                                 List<String> list = new ArrayList<>();
+                                 response.forEach(response1 -> list.add(response1.toString()));
 
-                    return Future.succeededFuture(list);
-                }));
+                                 return Future.succeededFuture(list);
+                             }));
     }
 
     /**
      * LINDEX key index
-     * LINDEX 返回列表 key 里索引 index 位置存储的元素。 index 下标是从 0 开始索引的，所以 0 是表示第一个元素， 1 表示第二个元素，并以此类推。 负数索引用于指定从列表尾部开始索引的元素，在这种方法下，-1 表示最后一个元素，-2 表示倒数第二个元素，并以此往前推。
+     * LINDEX 返回列表 key 里索引 index 位置存储的元素。 index 下标是从 0 开始索引的，所以 0 是表示第一个元素， 1 表示第二个元素，并以此类推。
+     * 负数索引用于指定从列表尾部开始索引的元素，在这种方法下，-1 表示最后一个元素，-2 表示倒数第二个元素，并以此往前推。
      * 当 key 值不是列表的时候，会返回错误。
      *
      * @return 查询的元素，index 超出索引范围时返回 nil 。
      */
     default Future<String> getElementInList(String key, int index) {
         return api(api -> api.lindex(key, String.valueOf(index))
-                         .compose(response -> {
-                    if (response == null) {
-                        return Future.succeededFuture();
-                    }
-                    return Future.succeededFuture(response.toString());
-                }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture();
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -195,7 +199,8 @@ public interface RedisListMixin extends RedisApiMixin {
      * @return 执行操作后的列表长度，列表中pivot参考值不存在的时候返回 -1。
      */
     default Future<Integer> insertIntoListBefore(String key, String pivot, String element) {
-        return api(api -> api.linsert(key, "BEFORE", pivot, element).compose(response -> Future.succeededFuture(response.toInteger())));
+        return api(api -> api.linsert(key, "BEFORE", pivot, element)
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -282,7 +287,7 @@ public interface RedisListMixin extends RedisApiMixin {
      */
     default Future<Integer> removeSomeMatchedElementsFromList(String key, int count, String element) {
         return api(api -> api.lrem(key, String.valueOf(count), element)
-                         .compose(response -> Future.succeededFuture(response.toInteger())));
+                             .compose(response -> Future.succeededFuture(response.toInteger())));
     }
 
     /**
@@ -292,13 +297,13 @@ public interface RedisListMixin extends RedisApiMixin {
      */
     default Future<Void> setElementInList(String key, int index, String element) {
         return api(api -> api.lset(key, String.valueOf(index), element)
-                         .compose(response -> {
-                    if ("OK".equals(response.toString())) {
-                        return Future.succeededFuture();
-                    } else {
-                        return Future.failedFuture(new RuntimeException("not OK but " + response));
-                    }
-                }));
+                             .compose(response -> {
+                                 if ("OK".equals(response.toString())) {
+                                     return Future.succeededFuture();
+                                 } else {
+                                     return Future.failedFuture(new RuntimeException("not OK but " + response));
+                                 }
+                             }));
     }
 
     /**
@@ -317,12 +322,12 @@ public interface RedisListMixin extends RedisApiMixin {
      */
     default Future<String> blockingMoveElementBetweenLists(String source, String destination, String from, String to, long timeout) {
         return api(api -> api.blmove(source, destination, from, to, String.valueOf(timeout))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -387,14 +392,15 @@ public interface RedisListMixin extends RedisApiMixin {
      * @return 弹出并推入的元素；如果超时返回 null
      * @deprecated use {@link RedisListMixin#blockingMoveElementBetweenLists(String, String, String, String, long)}
      */
+    @Deprecated(since = "5.0.0")
     default Future<String> blockingPopTailAndPushHead(String source, String destination, long timeout) {
         return api(api -> api.brpoplpush(source, destination, String.valueOf(timeout))
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -411,12 +417,12 @@ public interface RedisListMixin extends RedisApiMixin {
      */
     default Future<String> moveElementBetweenLists(String source, String destination, String from, String to) {
         return api(api -> api.lmove(source, destination, from, to)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 
     /**
@@ -431,13 +437,14 @@ public interface RedisListMixin extends RedisApiMixin {
      * @return 被移除和添加的元素；如果列表 source 为空，返回 null
      * @deprecated use {@link RedisListMixin#moveElementBetweenLists(String, String, String, String)}
      */
+    @Deprecated(since = "5.0.0")
     default Future<String> popTailAndPushHead(String source, String destination) {
         return api(api -> api.rpoplpush(source, destination)
-                         .compose(response -> {
-                      if (response == null) {
-                          return Future.succeededFuture(null);
-                      }
-                      return Future.succeededFuture(response.toString());
-                  }));
+                             .compose(response -> {
+                                 if (response == null) {
+                                     return Future.succeededFuture(null);
+                                 }
+                                 return Future.succeededFuture(response.toString());
+                             }));
     }
 }
