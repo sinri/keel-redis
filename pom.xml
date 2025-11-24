@@ -6,8 +6,8 @@
 
     <groupId>io.github.sinri</groupId>
     <artifactId>keel-redis</artifactId>
-    <!--    <version>5.0.0-SNAPSHOT</version>-->
-    <version>5.0.0-rc.1</version>
+    <!--        <version>5.0.0-SNAPSHOT</version>-->
+    <version>5.0.0-rc.2</version>
 
     <name>Keel Integration for Redis</name>
     <description>
@@ -186,13 +186,13 @@
         <dependency>
             <groupId>io.github.sinri</groupId>
             <artifactId>keel-core</artifactId>
-            <version>5.0.0-rc.6</version>
+            <version>5.0.0-rc.7</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.github.sinri</groupId>
             <artifactId>keel-test</artifactId>
-            <version>5.0.0-rc.6</version>
+            <version>5.0.0-rc.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
