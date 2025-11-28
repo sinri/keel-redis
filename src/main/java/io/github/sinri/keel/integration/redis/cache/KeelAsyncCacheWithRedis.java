@@ -18,14 +18,15 @@ import java.util.function.Function;
  */
 public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, String> {
     public static final long DEFAULT_LIFE_IN_SECONDS = 60;
+    @NotNull
     private final RedisKit redisKit;
 
-    public KeelAsyncCacheWithRedis(String redisInstanceKey) {
-        this.redisKit = new RedisKit(redisInstanceKey);
+    public KeelAsyncCacheWithRedis(@NotNull RedisKit redisInstance) {
+        this.redisKit = redisInstance;
     }
 
     @Override
-    public Future<Void> save(@NotNull String key, String value, long lifeInSeconds) {
+    public @NotNull Future<Void> save(@NotNull String key, String value, long lifeInSeconds) {
         return this.redisKit.setScalarToKeyForSeconds(key, value, Math.toIntExact(lifeInSeconds));
     }
 
@@ -55,7 +56,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
     }
 
     @Override
-    public Future<String> read(@NotNull String key, Function<String, Future<String>> generator, long lifeInSeconds) {
+    public @NotNull Future<String> read(@NotNull String key, Function<String, Future<String>> generator, long lifeInSeconds) {
         return this.read(key).compose(s -> {
                        Objects.requireNonNull(s);
                        return Future.succeededFuture(s);
@@ -67,7 +68,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
     }
 
     @Override
-    public Future<Void> remove(@NotNull String key) {
+    public @NotNull Future<Void> remove(@NotNull String key) {
         return redisKit.deleteKey(key).compose(x -> Future.succeededFuture());
     }
 
@@ -79,7 +80,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @throws UnsupportedOperationException 这是一个不支持的危险动作
      */
     @Override
-    public Future<Void> removeAll() {
+    public @NotNull Future<Void> removeAll() {
         throw new UnsupportedOperationException();
     }
 
@@ -89,7 +90,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @return 立即返回的异步成功结果
      */
     @Override
-    public Future<Void> cleanUp() {
+    public @NotNull Future<Void> cleanUp() {
         return Future.succeededFuture();
     }
 
@@ -103,7 +104,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @throws UnsupportedOperationException 这是一个不支持的危险动作
      */
     @Override
-    public Future<Set<String>> getCachedKeySet() {
+    public @NotNull Future<Set<String>> getCachedKeySet() {
         throw new UnsupportedOperationException();
     }
 }
