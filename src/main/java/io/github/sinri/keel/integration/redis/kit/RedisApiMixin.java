@@ -1,5 +1,6 @@
 package io.github.sinri.keel.integration.redis.kit;
 
+import io.github.sinri.keel.base.Keel;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
@@ -16,6 +17,7 @@ import java.util.function.Function;
  * @since 5.0.0
  */
 public interface RedisApiMixin {
+    @NotNull Keel getKeel();
     Redis getClient();
 
     /**

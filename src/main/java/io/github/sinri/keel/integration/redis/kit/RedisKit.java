@@ -1,12 +1,10 @@
 package io.github.sinri.keel.integration.redis.kit;
 
+import io.github.sinri.keel.base.Keel;
 import io.github.sinri.keel.base.configuration.ConfigTree;
 import io.vertx.redis.client.Redis;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
-import static io.github.sinri.keel.base.KeelInstance.Keel;
 
 
 /**
@@ -18,14 +16,16 @@ public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin
         RedisOrderedSetMixin {
     @NotNull
     private final Redis client;
+    @NotNull
+    private final Keel keel;
 
-    public RedisKit(@NotNull String redisInstanceKey) throws ConfigTree.NotConfiguredException {
-        this(new RedisConfig(Objects.requireNonNull(
-                Keel.getConfiguration().extract("redis", redisInstanceKey))));
+    public RedisKit(@NotNull Keel keel, @NotNull RedisConfig redisConfig) throws ConfigTree.NotConfiguredException {
+        this.client = Redis.createClient(keel.getVertx(), redisConfig.toRedisOptions());
+        this.keel = keel;
     }
 
-    public RedisKit(@NotNull RedisConfig redisConfig) throws ConfigTree.NotConfiguredException {
-        this.client = Redis.createClient(Keel.getVertx(), redisConfig.toRedisOptions());
+    public @NotNull Keel getKeel() {
+        return keel;
     }
 
     public @NotNull Redis getClient() {
