@@ -1,7 +1,7 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.github.sinri.keel.base.configuration.ConfigElement;
-import io.github.sinri.keel.base.configuration.ConfigTree;
+import io.github.sinri.keel.base.configuration.NotConfiguredException;
 import io.vertx.redis.client.RedisOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import java.util.List;
  * redis.INSTANCE_NAME.poolCleanerInterval=5000<br/>
  * </p>
  */
-public class RedisConfig extends ConfigTree {
+public class RedisConfig extends ConfigElement {
 
     /**
      * Constructs a RedisConfig instance from an existing configuration element.
