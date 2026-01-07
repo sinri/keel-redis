@@ -1,6 +1,8 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,8 @@ import java.util.Objects;
  *
  * @since 5.0.0
  */
-public interface RedisListMixin extends RedisApiMixin {
+@NullMarked
+interface RedisListMixin extends RedisApiMixin {
 
     default Future<Integer> pushToListTail(String key, String element) {
         return pushToListTail(key, List.of(element));
@@ -216,9 +219,9 @@ public interface RedisListMixin extends RedisApiMixin {
     default Future<List<Integer>> seekElementInList(
             String key,
             String element,
-            Integer rank,
-            Integer count,
-            Integer maxLen
+            @Nullable Integer rank,
+            @Nullable Integer count,
+            @Nullable Integer maxLen
     ) {
         return api(api -> {
             List<String> args = new ArrayList<>();

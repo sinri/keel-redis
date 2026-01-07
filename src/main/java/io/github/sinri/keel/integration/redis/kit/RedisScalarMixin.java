@@ -1,6 +1,8 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -11,7 +13,8 @@ import java.util.*;
  *
  * @since 5.0.0
  */
-public interface RedisScalarMixin extends RedisApiMixin {
+@NullMarked
+interface RedisScalarMixin extends RedisApiMixin {
     default Future<Void> setScalarToKeyForSeconds(String key, String value, Integer exInSecond) {
         return this.setScalarToKeyForSeconds(key, value, exInSecond, SetMode.None);
     }
@@ -49,8 +52,8 @@ public interface RedisScalarMixin extends RedisApiMixin {
     private Future<Void> setScalarToKey(
             String key,
             String value,
-            Integer EX,
-            Long PX,
+            @Nullable Integer EX,
+            @Nullable Long PX,
             SetMode setMode
     ) {
         List<String> args = new ArrayList<>();
@@ -256,9 +259,9 @@ public interface RedisScalarMixin extends RedisApiMixin {
      * @param keys 需要获取值的key列表
      * @return 按顺序返回指定 key 的值的列表
      */
-    default Future<List<String>> getMultipleStrings(List<String> keys) {
+    default Future<List<@Nullable String>> getMultipleStrings(List<String> keys) {
         return api(api -> api.mget(keys).compose(response -> {
-            List<String> values = new ArrayList<>();
+            List<@Nullable String> values = new ArrayList<>();
             if (response != null) {
                 response.forEach(item -> {
                     if (item == null) {
@@ -416,7 +419,7 @@ public interface RedisScalarMixin extends RedisApiMixin {
             String key1,
             String key2,
             boolean useKeys,
-            Integer minMatchLen,
+            @Nullable Integer minMatchLen,
             boolean withMatchLen
     ) {
         return api(api -> {

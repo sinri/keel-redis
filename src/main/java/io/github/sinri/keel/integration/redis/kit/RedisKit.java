@@ -1,10 +1,12 @@
 package io.github.sinri.keel.integration.redis.kit;
 
-import io.github.sinri.keel.base.Keel;
 import io.github.sinri.keel.base.configuration.NotConfiguredException;
+import io.vertx.core.Closeable;
+import io.vertx.core.Completable;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.redis.client.Redis;
-import org.jetbrains.annotations.NotNull;
-
+import org.jspecify.annotations.NullMarked;
 
 
 /**
@@ -12,28 +14,27 @@ import org.jetbrains.annotations.NotNull;
  *
  * @since 5.0.0
  */
-public class RedisKit implements RedisScalarMixin, RedisListMixin, RedisBitMixin, RedisHashMixin, RedisSetMixin,
-        RedisOrderedSetMixin {
-    @NotNull
+@NullMarked
+public class RedisKit implements Closeable,
+        RedisScalarMixin, RedisListMixin, RedisBitMixin, RedisHashMixin, RedisSetMixin, RedisOrderedSetMixin {
+
     private final Redis client;
-    @NotNull
-    private final Keel keel;
 
-    public RedisKit(@NotNull Keel keel, @NotNull RedisConfig redisConfig) throws NotConfiguredException {
-        this.client = Redis.createClient(keel.getVertx(), redisConfig.toRedisOptions());
-        this.keel = keel;
+    public RedisKit(Vertx vertx, RedisConfig redisConfig) throws NotConfiguredException {
+        this.client = Redis.createClient(vertx, redisConfig.toRedisOptions());
     }
 
-    public @NotNull Keel getKeel() {
-        return keel;
-    }
-
-    public @NotNull Redis getClient() {
+    public Redis getClient() {
         return client;
     }
 
-    public void close() {
-        this.client.close();
+    public Future<Void> close() {
+        return this.client.close();
+    }
+
+    @Override
+    public void close(Completable<Void> completion) {
+        this.client.close().onComplete(completion);
     }
 
 }

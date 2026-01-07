@@ -4,8 +4,8 @@ import io.github.sinri.keel.core.cache.KeelAsyncCacheInterface;
 import io.github.sinri.keel.core.cache.NotCached;
 import io.github.sinri.keel.integration.redis.kit.RedisKit;
 import io.vertx.core.Future;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Set;
@@ -16,23 +16,24 @@ import java.util.function.Function;
  *
  * @since 5.0.0
  */
+@NullMarked
 public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, String> {
     public static final long DEFAULT_LIFE_IN_SECONDS = 60;
-    @NotNull
+
     private final RedisKit redisKit;
 
-    public KeelAsyncCacheWithRedis(@NotNull RedisKit redisInstance) {
+    public KeelAsyncCacheWithRedis(RedisKit redisInstance) {
         this.redisKit = redisInstance;
     }
 
     @Override
-    public @NotNull Future<Void> save(@NotNull String key, String value, long lifeInSeconds) {
+    public Future<Void> save(String key, String value, long lifeInSeconds) {
         return this.redisKit.setScalarToKeyForSeconds(key, value, Math.toIntExact(lifeInSeconds));
     }
 
-    @NotNull
+
     @Override
-    public Future<String> read(@NotNull String key) {
+    public Future<String> read(String key) {
         return this.redisKit.getString(key)
                             .compose(value -> {
                                 if (Objects.isNull(value)) {
@@ -42,22 +43,27 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
                             });
     }
 
-    @NotNull
+
     @Override
-    public Future<Void> save(@NotNull String s, @Nullable String s2) {
-        return save(s, s2, DEFAULT_LIFE_IN_SECONDS);
+    public Future<Void> save(String s, @Nullable String s2) {
+        if (s2 == null) {
+            return remove(s);
+        } else {
+            return save(s, s2, DEFAULT_LIFE_IN_SECONDS);
+        }
     }
 
-    @NotNull
+
     @Override
-    public Future<String> read(@NotNull String key, String fallbackValue) {
+    public Future<@Nullable String> read(String key, @Nullable String fallbackValue) {
         return this.read(key)
-                   .compose(s -> Future.succeededFuture(Objects.requireNonNullElse(s, fallbackValue)), throwable -> Future.succeededFuture(fallbackValue));
+                   .recover(throwable -> Future.succeededFuture(fallbackValue));
     }
 
     @Override
-    public @NotNull Future<String> read(@NotNull String key, Function<String, Future<String>> generator, long lifeInSeconds) {
-        return this.read(key).compose(s -> {
+    public Future<String> read(String key, Function<String, Future<String>> generator, long lifeInSeconds) {
+        return this.read(key)
+                   .compose(s -> {
                        Objects.requireNonNull(s);
                        return Future.succeededFuture(s);
                    })
@@ -68,7 +74,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
     }
 
     @Override
-    public @NotNull Future<Void> remove(@NotNull String key) {
+    public Future<Void> remove(String key) {
         return redisKit.deleteKey(key).compose(x -> Future.succeededFuture());
     }
 
@@ -80,7 +86,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @throws UnsupportedOperationException 这是一个不支持的危险动作
      */
     @Override
-    public @NotNull Future<Void> removeAll() {
+    public Future<Void> removeAll() {
         throw new UnsupportedOperationException();
     }
 
@@ -90,7 +96,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @return 立即返回的异步成功结果
      */
     @Override
-    public @NotNull Future<Void> cleanUp() {
+    public Future<Void> cleanUp() {
         return Future.succeededFuture();
     }
 
@@ -104,7 +110,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
      * @throws UnsupportedOperationException 这是一个不支持的危险动作
      */
     @Override
-    public @NotNull Future<Set<String>> getCachedKeySet() {
+    public Future<Set<String>> getCachedKeySet() {
         throw new UnsupportedOperationException();
     }
 }

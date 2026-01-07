@@ -1,6 +1,8 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +14,8 @@ import java.util.Map;
  *
  * @since 5.0.0
  */
-public interface RedisHashMixin extends RedisApiMixin {
+@NullMarked
+interface RedisHashMixin extends RedisApiMixin {
     /**
      * HDEL key field [field ...]
      * Redis HDEL 命令用于删除哈希表 key 中的一个或多个指定字段，不存在的字段将被忽略。
@@ -142,13 +145,13 @@ public interface RedisHashMixin extends RedisApiMixin {
      *
      * @return 一个包含多个给定字段关联值的表，表值的排列顺序和指定字段的请求顺序一样。
      */
-    default Future<List<String>> getMultipleHashFields(String key, List<String> fields) {
+    default Future<List<@Nullable String>> getMultipleHashFields(String key, List<String> fields) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
             args.addAll(fields);
             return api.hmget(args).compose(response -> {
-                List<String> list = new ArrayList<>();
+                List<@Nullable String> list = new ArrayList<>();
                 if (response != null) {
                     response.forEach(item -> {
                         if (item == null) {
@@ -198,7 +201,7 @@ public interface RedisHashMixin extends RedisApiMixin {
      * @param count   指定从数据集里返回多少元素，默认值为 10
      * @return 包含两个元素的列表，第一个元素是用于下一次迭代的新游标，第二个元素是包含匹配元素的列表
      */
-    default Future<Map<String, Object>> scanHash(String key, String cursor, String pattern, Integer count) {
+    default Future<Map<String, Object>> scanHash(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);

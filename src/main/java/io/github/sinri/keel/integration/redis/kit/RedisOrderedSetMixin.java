@@ -1,6 +1,8 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +14,8 @@ import java.util.Map;
  *
  * @since 5.0.0
  */
-public interface RedisOrderedSetMixin extends RedisApiMixin {
+@NullMarked
+interface RedisOrderedSetMixin extends RedisApiMixin {
 
     /**
      * ZADD key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...]
@@ -33,14 +36,14 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param memberScores 成员-分数映射
      * @return 被成功添加或更新的成员数量（不计算被忽略的成员）
      */
-    default Future<Integer> addToOrderedSet(String key, Map<String, Object> options, Map<String, Double> memberScores) {
+    default Future<Integer> addToOrderedSet(String key, @Nullable Map<String, @Nullable Object> options, Map<String, Double> memberScores) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
 
             // 添加选项
             if (options != null) {
-                for (Map.Entry<String, Object> entry : options.entrySet()) {
+                for (Map.Entry<String, @Nullable Object> entry : options.entrySet()) {
                     if (entry.getValue() != null) {
                         args.add(entry.getKey());
                     }
@@ -128,7 +131,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param withScores 是否返回分数
      * @return 计算结果成员列表，如果withScores为true，则为成员和分数交替的列表
      */
-    default Future<List<String>> intersectOrderedSets(List<String> keys, List<Double> weights, String aggregate, boolean withScores) {
+    default Future<List<String>> intersectOrderedSets(List<String> keys, @Nullable List<Double> weights, @Nullable String aggregate, boolean withScores) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(String.valueOf(keys.size()));
@@ -169,7 +172,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param aggregate   可选的聚合方式（SUM、MIN、MAX）
      * @return 目标有序集合中的元素数量
      */
-    default Future<Integer> storeIntersectionOfOrderedSets(String destination, List<String> keys, List<Double> weights, String aggregate) {
+    default Future<Integer> storeIntersectionOfOrderedSets(String destination, List<String> keys, @Nullable List<Double> weights, @Nullable String aggregate) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(destination);
@@ -217,7 +220,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param members 要查询分数的成员列表
      * @return 分数列表，与输入成员顺序对应，不存在的成员返回null
      */
-    default Future<List<Double>> getMultipleMemberScores(String key, List<String> members) {
+    default Future<List<@Nullable Double>> getMultipleMemberScores(String key, List<String> members) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -225,7 +228,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
 
             return api.zmscore(args)
                       .compose(response -> {
-                          List<Double> scores = new ArrayList<>();
+                          List<@Nullable Double> scores = new ArrayList<>();
                           response.forEach(item -> {
                               if (item == null) {
                                   scores.add(null);
@@ -246,7 +249,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param count 要移除的成员数量（可选，默认为1）
      * @return 被移除的成员和分数，交替出现在列表中
      */
-    default Future<List<String>> popMaxMembersFromOrderedSet(String key, Integer count) {
+    default Future<List<String>> popMaxMembersFromOrderedSet(String key, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -271,7 +274,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param count 要移除的成员数量（可选，默认为1）
      * @return 被移除的成员和分数，交替出现在列表中
      */
-    default Future<List<String>> popMinMembersFromOrderedSet(String key, Integer count) {
+    default Future<List<String>> popMinMembersFromOrderedSet(String key, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -332,7 +335,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @return 符合字典序范围的成员列表
      */
     @Deprecated(since = "4.1.0")
-    default Future<List<String>> getOrderedSetRangeByLex(String key, String min, String max, Integer offset, Integer count) {
+    default Future<List<String>> getOrderedSetRangeByLex(String key, String min, String max, @Nullable Integer offset, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -368,7 +371,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @return 符合分数范围的成员列表，如果withScores为true，则为成员和分数交替的列表
      */
     @Deprecated(since = "4.1.0")
-    default Future<List<String>> getOrderedSetRangeByScore(String key, String min, String max, boolean withScores, Integer offset, Integer count) {
+    default Future<List<String>> getOrderedSetRangeByScore(String key, String min, String max, boolean withScores, @Nullable Integer offset, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -402,7 +405,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param member 成员名称
      * @return 排名，如果成员不存在则返回null
      */
-    default Future<Integer> getOrderedSetMemberRank(String key, String member) {
+    default Future<@Nullable Integer> getOrderedSetMemberRank(String key, String member) {
         return api(api -> api.zrank(key, member)
                              .compose(response -> {
                                  if (response == null) {
@@ -525,7 +528,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @return 符合字典序范围的成员列表，按字典序递减排序
      */
     @Deprecated(since = "4.1.0")
-    default Future<List<String>> getOrderedSetReverseRangeByLex(String key, String max, String min, Integer offset, Integer count) {
+    default Future<List<String>> getOrderedSetReverseRangeByLex(String key, String max, String min, @Nullable Integer offset, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -560,7 +563,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @return 符合分数范围的成员列表，按分数递减排序，如果withScores为true，则为成员和分数交替的列表
      */
     @Deprecated(since = "4.1.0")
-    default Future<List<String>> getOrderedSetReverseRangeByScore(String key, String max, String min, boolean withScores, Integer offset, Integer count) {
+    default Future<List<String>> getOrderedSetReverseRangeByScore(String key, String max, String min, boolean withScores, @Nullable Integer offset, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -594,7 +597,7 @@ public interface RedisOrderedSetMixin extends RedisApiMixin {
      * @param member 成员名称
      * @return 排名，如果成员不存在则返回null
      */
-    default Future<Integer> getOrderedSetMemberReverseRank(String key, String member) {
+    default Future<@Nullable Integer> getOrderedSetMemberReverseRank(String key, String member) {
         return api(api -> api.zrevrank(key, member)
                              .compose(response -> {
                                  if (response == null) {

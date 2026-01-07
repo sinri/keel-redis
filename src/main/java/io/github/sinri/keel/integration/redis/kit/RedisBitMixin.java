@@ -1,6 +1,7 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +13,8 @@ import java.util.List;
  *
  * @since 5.0.0
  */
-public interface RedisBitMixin extends RedisApiMixin {
+@NullMarked
+interface RedisBitMixin extends RedisApiMixin {
     /**
      * BITCOUNT key [start end]
      * 计算给定字符串中，被设置为 1 的比特位的数量。

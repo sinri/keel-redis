@@ -1,10 +1,10 @@
 package io.github.sinri.keel.integration.redis.kit;
 
-import io.github.sinri.keel.base.Keel;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +16,9 @@ import java.util.function.Function;
  *
  * @since 5.0.0
  */
-public interface RedisApiMixin {
-    @NotNull Keel getKeel();
+@NullMarked
+interface RedisApiMixin {
+
     Redis getClient();
 
     /**
@@ -32,7 +33,7 @@ public interface RedisApiMixin {
      *                 instance
      * @return A Future containing the result of the Redis command
      */
-    default <T> Future<T> api(@NotNull Function<RedisAPI, Future<T>> function) {
+    default <T> Future<T> api(Function<RedisAPI, Future<T>> function) {
         return Future.succeededFuture()
                      .compose(v -> this.getClient().connect())
                      .map(RedisAPI::api)
@@ -455,7 +456,7 @@ public interface RedisApiMixin {
      * @param type    筛选指定类型的键
      * @return 包含下一个游标和匹配的键列表
      */
-    default Future<ScanResult> scan(String cursor, String pattern, Integer count, String type) {
+    default Future<ScanResult> scan(String cursor, @Nullable String pattern, @Nullable Integer count, @Nullable String type) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(cursor);
@@ -489,8 +490,10 @@ public interface RedisApiMixin {
      * SORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]
      * Redis SORT 命令用于对列表、集合或有序集合中的元素进行排序。
      */
-    default Future<List<String>> sort(String key, String byPattern, Integer offset, Integer count,
-                                      List<String> getPatterns, boolean desc, boolean alpha, String storeDestination) {
+    default Future<List<String>> sort(
+            String key, @Nullable String byPattern, @Nullable Integer offset, @Nullable Integer count,
+            @Nullable List<String> getPatterns, boolean desc, boolean alpha, @Nullable String storeDestination
+    ) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -558,7 +561,7 @@ public interface RedisApiMixin {
      * @param replace       是否替换已有的目标键
      * @return 复制成功返回 true，如果源键不存在则返回 false
      */
-    default Future<Boolean> copy(String source, String destination, Integer destinationDb, boolean replace) {
+    default Future<Boolean> copy(String source, String destination, @Nullable Integer destinationDb, boolean replace) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(source);
@@ -606,7 +609,7 @@ public interface RedisApiMixin {
      * @param expireValue  过期值，当使用 PERSIST 时可为 null
      * @return 指定键的值，如果键不存在则返回 null
      */
-    default Future<String> getex(String key, String expireOption, Long expireValue) {
+    default Future<String> getex(String key, @Nullable String expireOption, @Nullable Long expireValue) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -658,7 +661,7 @@ public interface RedisApiMixin {
      * @param count   单次迭代返回的元素数量
      * @return 包含下一个游标和匹配的字段-值对的列表
      */
-    default Future<HScanResult> hscan(String key, String cursor, String pattern, Integer count) {
+    default Future<HScanResult> hscan(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -704,7 +707,7 @@ public interface RedisApiMixin {
      * @param count   单次迭代返回的元素数量
      * @return 包含下一个游标和匹配的元素列表
      */
-    default Future<SScanResult> sscan(String key, String cursor, String pattern, Integer count) {
+    default Future<SScanResult> sscan(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -740,7 +743,7 @@ public interface RedisApiMixin {
      * @param count   单次迭代返回的元素数量
      * @return 包含下一个游标和匹配的成员-分数对的列表
      */
-    default Future<ZScanResult> zscan(String key, String cursor, String pattern, Integer count) {
+    default Future<ZScanResult> zscan(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -805,7 +808,7 @@ public interface RedisApiMixin {
      * @param type 客户端类型，可选值为 normal、master、replica、pubsub
      * @return 客户端列表信息
      */
-    default Future<String> clientList(String type) {
+    default Future<String> clientList(@Nullable String type) {
         return api(api -> {
             if (type == null || type.isEmpty()) {
                 return api.client(List.of("LIST"))
@@ -985,7 +988,7 @@ public interface RedisApiMixin {
      *
      * @return 事务块内所有命令的返回值，按命令执行的先后顺序排列
      */
-    default Future<List<Object>> exec() {
+    default Future<List<@Nullable Object>> exec() {
         return api(api -> api.exec()
                              .compose(response -> {
                                  if (response == null) {
@@ -993,7 +996,7 @@ public interface RedisApiMixin {
                                      return Future.failedFuture(new RuntimeException("事务被打断"));
                                  }
 
-                                 List<Object> results = new ArrayList<>();
+                                 List<@Nullable Object> results = new ArrayList<>();
                                  response.forEach(item -> {
                                      if (item == null) {
                                          results.add(null);

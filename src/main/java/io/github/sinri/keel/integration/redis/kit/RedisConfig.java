@@ -3,7 +3,7 @@ package io.github.sinri.keel.integration.redis.kit;
 import io.github.sinri.keel.base.configuration.ConfigElement;
 import io.github.sinri.keel.base.configuration.NotConfiguredException;
 import io.vertx.redis.client.RedisOptions;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -23,6 +23,7 @@ import java.util.List;
  * redis.INSTANCE_NAME.poolCleanerInterval=5000<br/>
  * </p>
  */
+@NullMarked
 public class RedisConfig extends ConfigElement {
 
     /**
@@ -31,7 +32,7 @@ public class RedisConfig extends ConfigElement {
      * @param another The source configuration element to copy from
      * @throws NullPointerException If another is null
      */
-    public RedisConfig(@NotNull ConfigElement another) {
+    public RedisConfig(ConfigElement another) {
         super(another);
     }
 
@@ -42,7 +43,7 @@ public class RedisConfig extends ConfigElement {
      * @return The Redis connection URL
      * @throws NullPointerException If the URL is not configured
      */
-    @NotNull
+
     public String getUrl() throws NotConfiguredException {
         return readString(List.of("url"));
     }

@@ -1,6 +1,8 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,7 +14,8 @@ import java.util.Set;
  *
  * @since 5.0.0
  */
-public interface RedisSetMixin extends RedisApiMixin {
+@NullMarked
+interface RedisSetMixin extends RedisApiMixin {
     /**
      * SADD key member [member ...]
      * Redis SADD 命令将一个或多个成员元素加入到集合中，已经存在于集合的成员元素将被忽略。
@@ -119,7 +122,8 @@ public interface RedisSetMixin extends RedisApiMixin {
      * @return 如果成员元素是集合的成员，返回 true；如果成员元素不是集合的成员，或 key 不存在，返回 false。
      */
     default Future<Boolean> isSetMember(String key, String member) {
-        return api(api -> api.sismember(key, member).compose(response -> Future.succeededFuture(response.toInteger() == 1)));
+        return api(api -> api.sismember(key, member)
+                             .compose(response -> Future.succeededFuture(response.toInteger() == 1)));
     }
 
     /**
@@ -172,7 +176,8 @@ public interface RedisSetMixin extends RedisApiMixin {
      * @return 如果成员元素被成功移除，返回 true；如果成员元素不是 source 集合的成员，并且没有任何操作对 destination 集合执行，返回 false。
      */
     default Future<Boolean> moveSetMember(String source, String destination, String member) {
-        return api(api -> api.smove(source, destination, member).compose(response -> Future.succeededFuture(response.toInteger() == 1)));
+        return api(api -> api.smove(source, destination, member)
+                             .compose(response -> Future.succeededFuture(response.toInteger() == 1)));
     }
 
     /**
@@ -182,7 +187,7 @@ public interface RedisSetMixin extends RedisApiMixin {
      *
      * @return 被移除的随机元素。当集合不存在或是空集时，返回 null。
      */
-    default Future<List<String>> popRandomSetMembers(String key, Integer count) {
+    default Future<List<String>> popRandomSetMembers(String key, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -222,34 +227,38 @@ public interface RedisSetMixin extends RedisApiMixin {
      *
      * @return 随机元素，或包含随机元素的列表。当集合不存在或是空集时，返回 null。
      */
-    default Future<List<String>> getRandomSetMembers(String key, Integer count) {
+    default Future<@Nullable List<String>> getRandomSetMembers(String key, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
             if (count != null) {
                 args.add(count.toString());
             }
-            return api.srandmember(args).compose(response -> {
-                List<String> result = new ArrayList<>();
-                if (response != null) {
-                    if (count == null) {
-                        result.add(response.toString());
-                    } else {
-                        response.forEach(item -> result.add(item.toString()));
-                    }
-                }
-                return Future.succeededFuture(result);
-            });
+            return api.srandmember(args)
+                      .compose(response -> {
+                          if (response != null) {
+                              List<String> result = new ArrayList<>();
+                              if (count == null) {
+                                  result.add(response.toString());
+                              } else {
+                                  response.forEach(item -> result.add(item.toString()));
+                              }
+                              return Future.succeededFuture(result);
+                          } else {
+                              return Future.succeededFuture(null);
+                          }
+                      });
         });
     }
 
     default Future<String> getRandomSetMember(String key) {
-        return getRandomSetMembers(key, null).compose(members -> {
-            if (members.isEmpty()) {
-                return Future.succeededFuture(null);
-            }
-            return Future.succeededFuture(members.get(0));
-        });
+        return getRandomSetMembers(key, null)
+                .compose(members -> {
+                    if (members == null || members.isEmpty()) {
+                        return Future.succeededFuture(null);
+                    }
+                    return Future.succeededFuture(members.get(0));
+                });
     }
 
     /**
@@ -282,7 +291,7 @@ public interface RedisSetMixin extends RedisApiMixin {
      * @param count   指定从数据集里返回多少元素，默认值为 10
      * @return 包含两个元素的Future-Map，第一个是用于下一次迭代的新游标，第二个是匹配的元素列表
      */
-    default Future<SScanResult> scanSet(String key, String cursor, String pattern, Integer count) {
+    default Future<SScanResult> scanSet(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
