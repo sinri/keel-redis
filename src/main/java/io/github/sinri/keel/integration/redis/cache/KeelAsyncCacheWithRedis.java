@@ -39,7 +39,8 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
                                 if (Objects.isNull(value)) {
                                     return Future.failedFuture(new NotCached("Value is null"));
                                 }
-                                return Future.succeededFuture(value);
+                                String s = Objects.requireNonNull(value);
+                                return Future.succeededFuture(s);
                             });
     }
 

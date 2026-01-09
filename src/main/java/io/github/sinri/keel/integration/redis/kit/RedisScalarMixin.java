@@ -85,7 +85,7 @@ interface RedisScalarMixin extends RedisApiMixin {
      * @return 如果键 key 不存在， 那么返回特殊值 nil 。
      *         如果键 key 的值不是字符串类型， 返回错误， 因为 GET 命令只能用于字符串值。
      */
-    default Future<String> getString(String key) {
+    default Future<@Nullable String> getString(String key) {
         return api(api -> api.get(key).compose(response -> {
             if (response == null) {
                 return Future.succeededFuture();
