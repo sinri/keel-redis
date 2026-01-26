@@ -1,10 +1,10 @@
 package io.github.sinri.keel.integration.redis.kit;
 
+import io.github.sinri.keel.base.async.Keel;
 import io.github.sinri.keel.base.configuration.NotConfiguredException;
 import io.vertx.core.Closeable;
 import io.vertx.core.Completable;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.redis.client.Redis;
 import org.jspecify.annotations.NullMarked;
 
@@ -20,8 +20,8 @@ public class RedisKit implements Closeable,
 
     private final Redis client;
 
-    public RedisKit(Vertx vertx, RedisConfig redisConfig) throws NotConfiguredException {
-        this.client = Redis.createClient(vertx, redisConfig.toRedisOptions());
+    public RedisKit(Keel keel, RedisConfig redisConfig) throws NotConfiguredException {
+        this.client = Redis.createClient(keel, redisConfig.toRedisOptions());
     }
 
     public Redis getClient() {
