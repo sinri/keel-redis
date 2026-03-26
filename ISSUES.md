@@ -50,6 +50,8 @@ default Future<String> replaceString(String key, String newValue) {
 ```
 返回类型声明为 `Future<String>` 而非 `Future<@Nullable String>`，与 `@NullMarked` 注解矛盾。`getString`、`getdel`、`getex`、`getset`、`randomKey`、`objectEncoding` 等多个方法存在同样问题。
 
+**结论**: 已修复。为以下方法的返回类型添加 `@Nullable` 注解：`replaceString`（RedisScalarMixin）、`randomKey`、`objectEncoding`、`getdel`、`getex`、`getset`（RedisApiMixin）。`getString` 已有 `@Nullable` 标注，无需修改。
+
 ### 5. `restore` 方法将二进制数据错误转为 String
 **文件**: `RedisApiMixin.java:326`
 ```java

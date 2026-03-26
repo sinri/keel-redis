@@ -123,7 +123,7 @@ interface RedisApiMixin {
      * RANDOMKEY
      * Redis RANDOMKEY 命令从当前数据库中随机返回一个 key 。
      */
-    default Future<String> randomKey() {
+    default Future<@Nullable String> randomKey() {
         return api(api -> api.randomkey().compose(response -> {
             if (response == null) {
                 return Future.succeededFuture(null);
@@ -406,7 +406,7 @@ interface RedisApiMixin {
      * - IDLETIME: 返回空闲时间（秒）
      * - FREQ: 返回访问频率计数器（仅 LFU 模式）
      */
-    default Future<String> objectEncoding(String key) {
+    default Future<@Nullable String> objectEncoding(String key) {
         return api(api -> api.object(List.of("ENCODING", key))
                              .compose(response -> {
                                  if (response == null) {
@@ -589,7 +589,7 @@ interface RedisApiMixin {
      * @param key 键名
      * @return 指定键的值，如果键不存在则返回 null
      */
-    default Future<String> getdel(String key) {
+    default Future<@Nullable String> getdel(String key) {
         return api(api -> api.getdel(key)
                              .compose(response -> {
                                  if (response == null) {
@@ -609,7 +609,7 @@ interface RedisApiMixin {
      * @param expireValue  过期值，当使用 PERSIST 时可为 null
      * @return 指定键的值，如果键不存在则返回 null
      */
-    default Future<String> getex(String key, @Nullable String expireOption, @Nullable Long expireValue) {
+    default Future<@Nullable String> getex(String key, @Nullable String expireOption, @Nullable Long expireValue) {
         return api(api -> {
             List<String> args = new ArrayList<>();
             args.add(key);
@@ -641,7 +641,7 @@ interface RedisApiMixin {
      * @return 指定键的旧值，如果键不存在则返回 null
      */
     @Deprecated(since = "4.1.0")
-    default Future<String> getset(String key, String value) {
+    default Future<@Nullable String> getset(String key, String value) {
         return api(api -> api.getset(key, value)
                              .compose(response -> {
                                  if (response == null) {

@@ -117,7 +117,7 @@ interface RedisScalarMixin extends RedisApiMixin {
      * @return the old value stored at key, or nil when key did not exist.
      */
     @Deprecated(since = "4.1.0")
-    default Future<String> replaceString(String key, String newValue) {
+    default Future<@Nullable String> replaceString(String key, String newValue) {
         return api(api -> api.getset(key, newValue).compose(response -> {
             if (response == null) {
                 return Future.succeededFuture();
