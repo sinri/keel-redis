@@ -241,7 +241,7 @@ interface RedisListMixin extends RedisApiMixin {
                 args.add(String.valueOf(maxLen));
             }
 
-            return api.lpop(args).compose(response -> {
+            return api.lpos(args).compose(response -> {
                 ArrayList<Integer> list = new ArrayList<>();
                 if (count == null) {
                     if (response != null) {
