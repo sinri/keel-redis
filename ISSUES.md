@@ -40,6 +40,8 @@ default Future<Long> getTTLInMillisecond(String key) {
 ```
 成功分支返回 `Future.succeededFuture()` 而非 `Future.succeededFuture(ttl)`，调用者永远拿到 `null`。
 
+**结论**: 已修复。将两处 `Future.succeededFuture()` 改为 `Future.succeededFuture(ttl)`，使 TTL 值正确返回给调用者。
+
 ### 4. `replaceString` 返回类型不可为 null 但实际可能返回 null
 **文件**: `RedisScalarMixin.java:120`
 ```java

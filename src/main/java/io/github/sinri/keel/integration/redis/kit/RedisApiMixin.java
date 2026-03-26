@@ -196,7 +196,7 @@ interface RedisApiMixin {
                                      // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
                                      return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
                                  }
-                                 return Future.succeededFuture();
+                                 return Future.succeededFuture(ttl);
                              }));
     }
 
@@ -213,7 +213,7 @@ interface RedisApiMixin {
                                      // Redis 2.8 起：//key 不存在返回 -2 //key 存在但是没有关联超时时间返回 -1
                                      return Future.failedFuture(new RuntimeException("key 不存在或者 key 没有关联超时时间"));
                                  }
-                                 return Future.succeededFuture();
+                                 return Future.succeededFuture(ttl);
                              }));
     }
 
