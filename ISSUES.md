@@ -59,6 +59,8 @@ args.add(new String(serializedValue));  // RDB 序列化数据是二进制的，
 ```
 RDB 格式的序列化值是二进制数据，用 `new String(byte[])` 转换会导致数据损坏，RESTORE 命令必然失败。
 
+**结论**: 已修复。绕过 `RedisAPI.restore(List<String>)` 高层封装，改用底层 `RedisConnection.send(Request)` API，通过 `Request.cmd(Command.RESTORE).arg(key).arg(ttl).arg(serializedValue)` 以 `byte[]` 原生传递二进制 RDB 数据。
+
 ---
 
 ## 二、设计缺陷

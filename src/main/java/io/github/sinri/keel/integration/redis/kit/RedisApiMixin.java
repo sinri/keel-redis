@@ -1,8 +1,11 @@
 package io.github.sinri.keel.integration.redis.kit;
 
 import io.vertx.core.Future;
+import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
+import io.vertx.redis.client.RedisConnection;
+import io.vertx.redis.client.Request;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -319,24 +322,26 @@ interface RedisApiMixin {
      * @return 成功返回 OK
      */
     default Future<Void> restore(String key, long ttl, byte[] serializedValue, boolean replace) {
-        return api(api -> {
-            List<String> args = new ArrayList<>();
-            args.add(key);
-            args.add(String.valueOf(ttl));
-            args.add(new String(serializedValue));
-            if (replace) {
-                args.add("REPLACE");
-            }
-
-            return api.restore(args)
-                      .compose(response -> {
-                          if ("OK".equals(response.toString())) {
-                              return Future.succeededFuture();
-                          } else {
-                              return Future.failedFuture(new RuntimeException(response.toString()));
-                          }
-                      });
-        });
+        return Future.succeededFuture()
+                     .compose(v -> this.getClient().connect())
+                     .compose(conn -> {
+                         Request request = Request.cmd(Command.RESTORE)
+                                                  .arg(key)
+                                                  .arg(String.valueOf(ttl))
+                                                  .arg(serializedValue);
+                         if (replace) {
+                             request.arg("REPLACE");
+                         }
+                         return conn.send(request)
+                                    .compose(response -> {
+                                        if ("OK".equals(response.toString())) {
+                                            return Future.<Void>succeededFuture();
+                                        } else {
+                                            return Future.<Void>failedFuture(new RuntimeException(response.toString()));
+                                        }
+                                    })
+                                    .andThen(ar -> conn.close());
+                     });
     }
 
     /**
