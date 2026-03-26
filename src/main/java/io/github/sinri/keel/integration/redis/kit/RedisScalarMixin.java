@@ -531,6 +531,6 @@ interface RedisScalarMixin extends RedisApiMixin {
         /**
          * XX: 只有键key存在的时候才会设置key的值
          */
-        EX
+        XX
     }
 }
