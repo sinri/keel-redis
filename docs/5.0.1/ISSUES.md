@@ -32,7 +32,7 @@ default Future<Long> getTTLInMillisecond(String key) {
         .compose(response -> {
             var ttl = response.toLong();
             if (ttl < 0) {
-                return Future.failedFuture(...);
+                return Future.failedFuture(...)
             }
             return Future.succeededFuture();  // ← 丢失了 ttl 值！
         }));

@@ -1,0 +1,30 @@
+# Jekyll site for GitHub Pages (source: /docs)
+# Theme: https://github.com/pages-themes/merlot
+title: Keel Redis
+description: Keel Integration for Redis — 使用说明与 API 导引
+theme: jekyll-theme-merlot
+
+# Project Pages: https://<user>.github.io/<repo>/
+url: "https://sinri.github.io"
+baseurl: "/keel-redis"
+
+repository: sinri/keel-redis
+show_downloads: true
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# GitHub Pages 允许的插件子集；与 actions/jekyll-build-pages 内置环境一致
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-default-layout
+  - jekyll-relative-links
+  - jekyll-readme-index
+  - jekyll-github-metadata
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor

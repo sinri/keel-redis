@@ -47,3 +47,8 @@ build/
 
 .idea
 config.properties
+
+### Jekyll (docs/, local: cd docs && bundle exec jekyll serve) ###
+docs/_site/
+docs/.jekyll-cache/
+docs/.sass-cache/
