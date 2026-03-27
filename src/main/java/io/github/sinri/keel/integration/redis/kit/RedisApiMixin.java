@@ -102,16 +102,16 @@ interface RedisApiMixin {
                                  .compose(v -> txApi.multi().mapEmpty())
                                  .compose(v -> function.apply(txApi)
                                                        .recover(userErr -> txApi.discard()
-                                                 .recover(discardErr -> null)
-                                                 .compose(ignored -> Future.failedFuture(userErr))))
+                                                                                .recover(discardErr -> null)
+                                                                                .compose(ignored -> Future.failedFuture(userErr))))
                                  .compose(result -> txApi.exec()
-                                         .compose(execResponse -> {
-                                             if (execResponse == null) {
-                                                 return Future.failedFuture(
-                                                         new RuntimeException("事务被打断（WATCH 的 key 已被修改）"));
-                                             }
-                                             return Future.succeededFuture(result);
-                                         }))
+                                                         .compose(execResponse -> {
+                                                             if (execResponse == null) {
+                                                                 return Future.failedFuture(
+                                                                         new RuntimeException("事务被打断（WATCH 的 key 已被修改）"));
+                                                             }
+                                                             return Future.succeededFuture(result);
+                                                         }))
                                  .andThen(ar -> conn.close());
                      });
     }
@@ -407,8 +407,10 @@ interface RedisApiMixin {
                                             return Future.failedFuture(new RuntimeException(response.toString()));
                                         }
                                     })
-                                    .andThen(ar -> conn.close());
-                     });
+                                    .eventually(conn::close);
+                     })
+                     .compose(v -> Future.succeededFuture())
+                ;
     }
 
     /**
@@ -866,7 +868,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，返回的 ID 对应的连接会立即归还连接池，因此该 ID 无实际用途。
-     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT ID。
+     *         请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT ID。
      */
     @Deprecated(since = "5.0.0")
     default Future<Long> clientId() {
@@ -916,7 +918,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，设置的名字会随连接归还而失效。
-     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT SETNAME。
+     *         请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT SETNAME。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> clientSetname(String connectionName) {
@@ -925,7 +927,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，获取的连接名对应的连接会立即归还连接池。
-     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT GETNAME。
+     *         请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT GETNAME。
      */
     @Deprecated(since = "5.0.0")
     default Future<String> clientGetname() {
@@ -1043,7 +1045,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作，因为 MULTI 和后续命令会在不同连接上执行。
-     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
+     *         请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> multi() {
@@ -1052,7 +1054,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
+     *         请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<List<@Nullable Object>> exec() {
@@ -1061,7 +1063,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
+     *         请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> discard() {
@@ -1070,7 +1072,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作，因为 WATCH 和后续事务会在不同连接上执行。
-     * 请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
+     *         请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> watch(List<String> keys) {
@@ -1079,7 +1081,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
+     *         请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> unwatch() {
@@ -1088,6 +1090,43 @@ interface RedisApiMixin {
 
     enum ValueType {
         string, list, set, zset, hash, stream, none
+    }
+
+    /**
+     * GETEX 命令的过期选项枚举。
+     *
+     * @since 5.0.0
+     */
+    enum ExpireOption {
+        /**
+         * 设置过期时间（秒）
+         */
+        EX,
+        /**
+         * 设置过期时间（毫秒）
+         */
+        PX,
+        /**
+         * 设置过期时间为 Unix 时间戳（秒）
+         */
+        EXAT,
+        /**
+         * 设置过期时间为 Unix 时间戳（毫秒）
+         */
+        PXAT,
+        /**
+         * 移除过期时间
+         */
+        PERSIST
+    }
+
+    /**
+     * CLIENT LIST 命令的客户端类型枚举。
+     *
+     * @since 5.0.0
+     */
+    enum ClientType {
+        normal, master, replica, pubsub
     }
 
     class ScanResult {
@@ -1196,32 +1235,5 @@ interface RedisApiMixin {
         public double getScore() {
             return score;
         }
-    }
-
-    /**
-     * GETEX 命令的过期选项枚举。
-     *
-     * @since 5.0.0
-     */
-    enum ExpireOption {
-        /** 设置过期时间（秒） */
-        EX,
-        /** 设置过期时间（毫秒） */
-        PX,
-        /** 设置过期时间为 Unix 时间戳（秒） */
-        EXAT,
-        /** 设置过期时间为 Unix 时间戳（毫秒） */
-        PXAT,
-        /** 移除过期时间 */
-        PERSIST
-    }
-
-    /**
-     * CLIENT LIST 命令的客户端类型枚举。
-     *
-     * @since 5.0.0
-     */
-    enum ClientType {
-        normal, master, replica, pubsub
     }
 }
