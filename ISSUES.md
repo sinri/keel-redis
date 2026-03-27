@@ -79,6 +79,8 @@ default <T> Future<T> api(Function<RedisAPI, Future<T>> function) {
 ```
 Vert.x Redis 客户端本身支持连接池，`RedisConfig` 也配置了 `maxPoolSize`。但 `api()` 方法每次显式 `connect()` + `close()`，绕过了连接池复用机制。高并发场景下连接创建/销毁开销极大。
 
+**结论**: 已修复。`RedisKit` 新增缓存的 `RedisAPI` 实例（通过 `RedisAPI.api(Redis)` 创建），`api()` 方法改为直接委托给池化的 `RedisAPI`，由 Vert.x 内部自动管理连接池。同时新增 `withConnection()` 方法供需要独占连接的场景使用。
+
 ### 7. 事务 (MULTI/EXEC/WATCH) 实现根本不可用
 **文件**: `RedisApiMixin.java:973-1070`
 
@@ -89,8 +91,12 @@ Vert.x Redis 客户端本身支持连接池，`RedisConfig` 也配置了 `maxPoo
 
 这些事务方法完全无法实现事务语义。
 
+**结论**: 已修复。废弃原有 `multi()`/`exec()`/`discard()`/`watch()`/`unwatch()` 方法（抛出 `UnsupportedOperationException`）。新增 `withTransaction(Function)` 和 `withTransaction(List<String> watchKeys, Function)` 方法，在同一独占连接上执行完整的 WATCH→MULTI→命令→EXEC 流程，失败时自动 DISCARD。
+
 ### 8. `clientSetname` / `clientGetname` / `clientId` 无实际用途
 同理，由于每次 `api()` 调用使用不同连接，`clientSetname` 设置的名字在连接关闭后立刻失效，`clientId` 返回的 ID 也对应一个已关闭的连接。
+
+**结论**: 已废弃 `clientSetname`、`clientGetname`、`clientId` 方法（抛出 `UnsupportedOperationException`），引导用户使用 `withConnection()` 在独占连接上执行这些命令。保留 `clientInfo` 和 `clientList`（服务器级查询，不依赖连接亲和性）。
 
 ### 9. `STRALGO` 方法使用已移除的命令
 **文件**: `RedisScalarMixin.java:378-496`

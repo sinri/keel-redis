@@ -315,6 +315,7 @@ interface RedisListMixin extends RedisApiMixin {
      * 当 source 包含元素时，这个命令表现得和 LMOVE 一样。
      * 当 source 为空时， Redis 将会阻塞这个连接，直到另一个客户端 push 元素进入这个列表或者达到 timeout 时限。
      * timeout 为 0 表示无限阻塞。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param source      源列表
      * @param destination 目标列表
@@ -338,6 +339,7 @@ interface RedisListMixin extends RedisApiMixin {
      * Redis BLPOP 是 LPOP 命令的阻塞版本。
      * 当给定列表内没有任何元素可供弹出时，连接将被 BLPOP 命令阻塞，直到等待超时或发现可弹出元素为止。
      * 当给定多个 key 参数时，按参数 key 的先后顺序依次检查各个列表，弹出第一个非空列表的头元素。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param keys    一个或多个列表键
      * @param timeout 超时时间（秒），0 表示无限等待
@@ -363,6 +365,7 @@ interface RedisListMixin extends RedisApiMixin {
      * Redis BRPOP 是 RPOP 命令的阻塞版本。
      * 当给定列表内没有任何元素可供弹出时，连接将被 BRPOP 命令阻塞，直到等待超时或发现可弹出元素为止。
      * 当给定多个 key 参数时，按参数 key 的先后顺序依次检查各个列表，弹出第一个非空列表的尾元素。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param keys    一个或多个列表键
      * @param timeout 超时时间（秒），0 表示无限等待
@@ -388,6 +391,7 @@ interface RedisListMixin extends RedisApiMixin {
      * Redis BRPOPLPUSH 是 RPOPLPUSH 的阻塞版本。
      * 当 source 中没有元素时，BRPOPLPUSH 命令会阻塞连接，直到超时或有元素可以被弹出。
      * 超时设置为 0 表示无限期阻塞。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param source      源列表
      * @param destination 目标列表

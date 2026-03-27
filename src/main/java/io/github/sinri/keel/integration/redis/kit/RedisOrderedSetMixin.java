@@ -717,6 +717,7 @@ interface RedisOrderedSetMixin extends RedisApiMixin {
     /**
      * BZPOPMAX key [key ...] timeout
      * Redis BZPOPMAX 命令是 ZPOPMAX 命令的阻塞版本，它会在没有元素可弹出时阻塞连接。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param keys    要弹出元素的有序集合键名列表
      * @param timeout 超时时间（秒），0表示永不超时
@@ -742,6 +743,7 @@ interface RedisOrderedSetMixin extends RedisApiMixin {
     /**
      * BZPOPMIN key [key ...] timeout
      * Redis BZPOPMIN 命令是 ZPOPMIN 命令的阻塞版本，它会在没有元素可弹出时阻塞连接。
+     * <p><b>注意：</b>此阻塞命令会在超时期间占用连接池中的一个连接。高并发或长超时场景下可能耗尽连接池。</p>
      *
      * @param keys    要弹出元素的有序集合键名列表
      * @param timeout 超时时间（秒），0表示永不超时

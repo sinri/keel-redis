@@ -24,6 +24,8 @@ interface RedisApiMixin {
 
     Redis getClient();
 
+    RedisAPI getRedisAPI();
+
     /**
      * Execute a Redis command through RedisAPI with automatic connection
      * management.
@@ -37,12 +39,82 @@ interface RedisApiMixin {
      * @return A Future containing the result of the Redis command
      */
     default <T> Future<T> api(Function<RedisAPI, Future<T>> function) {
+        return function.apply(getRedisAPI());
+    }
+
+    /**
+     * 在独占连接上执行操作。连接在操作完成后自动关闭并归还连接池。
+     * 适用于需要连接亲和性的场景，如 CLIENT SETNAME 等连接级命令。
+     *
+     * @param function 在独占连接的 RedisAPI 上执行的操作
+     * @param <T>      返回类型
+     * @return 操作结果
+     * @since 5.0.0
+     */
+    default <T> Future<T> withConnection(Function<RedisAPI, Future<T>> function) {
         return Future.succeededFuture()
                      .compose(v -> this.getClient().connect())
-                     .map(RedisAPI::api)
-                     .compose(api -> Future.succeededFuture()
-                                           .compose(v -> function.apply(api))
-                                           .andThen(ar -> api.close()));
+                     .compose(conn -> {
+                         RedisAPI connApi = RedisAPI.api(conn);
+                         return Future.succeededFuture()
+                                      .compose(v -> function.apply(connApi))
+                                      .andThen(ar -> connApi.close());
+                     });
+    }
+
+    /**
+     * 在同一连接上执行 Redis 事务（MULTI/EXEC）。
+     * 用户函数中的命令会在 MULTI 之后排队，函数返回后自动执行 EXEC。
+     * 如果用户函数失败，自动执行 DISCARD 取消事务。
+     *
+     * @param function 在事务上下文中执行的操作，命令会被排队直到 EXEC
+     * @param <T>      用户函数的返回类型
+     * @return 用户函数的返回值（EXEC 成功后）
+     * @since 5.0.0
+     */
+    default <T> Future<T> withTransaction(Function<RedisAPI, Future<T>> function) {
+        return withTransaction(List.of(), function);
+    }
+
+    /**
+     * 在同一连接上执行带 WATCH 的 Redis 事务（WATCH/MULTI/EXEC）。
+     * 先监视指定的 key，然后执行 MULTI，用户函数中的命令排队，最后 EXEC。
+     * 如果被监视的 key 在事务执行前被修改，EXEC 会返回 null（事务被打断），此时返回失败。
+     * 如果用户函数失败，自动执行 DISCARD 取消事务。
+     *
+     * @param watchKeys 需要监视的 key 列表，为空则不执行 WATCH
+     * @param function  在事务上下文中执行的操作
+     * @param <T>       用户函数的返回类型
+     * @return 用户函数的返回值（EXEC 成功后）
+     * @since 5.0.0
+     */
+    default <T> Future<T> withTransaction(List<String> watchKeys, Function<RedisAPI, Future<T>> function) {
+        return Future.succeededFuture()
+                     .compose(v -> this.getClient().connect())
+                     .compose(conn -> {
+                         RedisAPI txApi = RedisAPI.api(conn);
+
+                         Future<Void> setup = Future.succeededFuture();
+                         if (!watchKeys.isEmpty()) {
+                             setup = setup.compose(v -> txApi.watch(watchKeys).mapEmpty());
+                         }
+
+                         return setup
+                                 .compose(v -> txApi.multi().mapEmpty())
+                                 .<T>compose(v -> function.apply(txApi)
+                                         .recover(userErr -> txApi.discard()
+                                                 .recover(discardErr -> null)
+                                                 .compose(ignored -> Future.<T>failedFuture(userErr))))
+                                 .compose(result -> txApi.exec()
+                                         .compose(execResponse -> {
+                                             if (execResponse == null) {
+                                                 return Future.<T>failedFuture(
+                                                         new RuntimeException("事务被打断（WATCH 的 key 已被修改）"));
+                                             }
+                                             return Future.succeededFuture(result);
+                                         }))
+                                 .andThen(ar -> conn.close());
+                     });
     }
 
     /**
@@ -785,14 +857,12 @@ interface RedisApiMixin {
     }
 
     /**
-     * CLIENT ID
-     * Redis CLIENT ID 命令返回当前连接的唯一 ID。
-     *
-     * @return 客户端 ID
+     * @deprecated 在池化连接模式下，返回的 ID 对应的连接会立即归还连接池，因此该 ID 无实际用途。
+     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT ID。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Long> clientId() {
-        return api(api -> api.client(List.of("ID"))
-                             .compose(response -> Future.succeededFuture(response.toLong())));
+        throw new UnsupportedOperationException("Use withConnection() instead");
     }
 
     /**
@@ -826,37 +896,21 @@ interface RedisApiMixin {
     }
 
     /**
-     * CLIENT SETNAME connection-name
-     * Redis CLIENT SETNAME 命令用于为当前连接分配一个名字。
-     *
-     * @param connectionName 连接名
-     * @return 设置成功返回 OK
+     * @deprecated 在池化连接模式下，设置的名字会随连接归还而失效。
+     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT SETNAME。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Void> clientSetname(String connectionName) {
-        return api(api -> api.client(List.of("SETNAME", connectionName))
-                             .compose(response -> {
-                                 if ("OK".equals(response.toString())) {
-                                     return Future.succeededFuture();
-                                 } else {
-                                     return Future.failedFuture(new RuntimeException(response.toString()));
-                                 }
-                             }));
+        throw new UnsupportedOperationException("Use withConnection() instead");
     }
 
     /**
-     * CLIENT GETNAME
-     * Redis CLIENT GETNAME 命令用于获取当前连接的名字。
-     *
-     * @return 连接名，如果没有设置则返回 null
+     * @deprecated 在池化连接模式下，获取的连接名对应的连接会立即归还连接池。
+     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT GETNAME。
      */
+    @Deprecated(since = "5.0.0")
     default Future<String> clientGetname() {
-        return api(api -> api.client(List.of("GETNAME"))
-                             .compose(response -> {
-                                 if (response == null) {
-                                     return Future.succeededFuture(null);
-                                 }
-                                 return Future.succeededFuture(response.toString());
-                             }));
+        throw new UnsupportedOperationException("Use withConnection() instead");
     }
 
     /**
@@ -969,109 +1023,48 @@ interface RedisApiMixin {
     }
 
     /**
-     * MULTI
-     * Redis MULTI 命令用于标记一个事务块的开始。
-     * 事务块内的命令将在 EXEC 命令被调用时按顺序执行。
-     *
-     * @return 成功返回 OK
+     * @deprecated 此方法在池化连接模式下无法正确工作，因为 MULTI 和后续命令会在不同连接上执行。
+     * 请使用 {@link #withTransaction(Function)} 替代。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Void> multi() {
-        return api(api -> api.multi()
-                             .compose(response -> {
-                                 if ("OK".equals(response.toString())) {
-                                     return Future.succeededFuture();
-                                 } else {
-                                     return Future.failedFuture(new RuntimeException(response.toString()));
-                                 }
-                             }));
+        throw new UnsupportedOperationException("Use withTransaction() instead");
     }
 
     /**
-     * EXEC
-     * Redis EXEC 命令用于执行事务块内的所有命令。
-     * 被打断的事务会返回错误。
-     *
-     * @return 事务块内所有命令的返回值，按命令执行的先后顺序排列
+     * @deprecated 此方法在池化连接模式下无法正确工作。
+     * 请使用 {@link #withTransaction(Function)} 替代。
      */
+    @Deprecated(since = "5.0.0")
     default Future<List<@Nullable Object>> exec() {
-        return api(api -> api.exec()
-                             .compose(response -> {
-                                 if (response == null) {
-                                     // 事务被打断
-                                     return Future.failedFuture(new RuntimeException("事务被打断"));
-                                 }
-
-                                 List<@Nullable Object> results = new ArrayList<>();
-                                 response.forEach(item -> {
-                                     if (item == null) {
-                                         results.add(null);
-                                     } else if (item.type() == io.vertx.redis.client.ResponseType.NUMBER) {
-                                         results.add(item.toLong());
-                                     } else if (item.type() == io.vertx.redis.client.ResponseType.BULK) {
-                                         results.add(item.toString());
-                                     } else if (item.type() == io.vertx.redis.client.ResponseType.MULTI) {
-                                         List<String> multiResults = new ArrayList<>();
-                                         item.forEach(subItem -> multiResults.add(subItem.toString()));
-                                         results.add(multiResults);
-                                     } else {
-                                         results.add(item.toString());
-                                     }
-                                 });
-
-                                 return Future.succeededFuture(results);
-                             }));
+        throw new UnsupportedOperationException("Use withTransaction() instead");
     }
 
     /**
-     * DISCARD
-     * Redis DISCARD 命令用于取消事务，放弃执行事务块内的所有命令。
-     *
-     * @return 成功返回 OK
+     * @deprecated 此方法在池化连接模式下无法正确工作。
+     * 请使用 {@link #withTransaction(Function)} 替代。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Void> discard() {
-        return api(api -> api.discard()
-                             .compose(response -> {
-                                 if ("OK".equals(response.toString())) {
-                                     return Future.succeededFuture();
-                                 } else {
-                                     return Future.failedFuture(new RuntimeException(response.toString()));
-                                 }
-                             }));
+        throw new UnsupportedOperationException("Use withTransaction() instead");
     }
 
     /**
-     * WATCH key [key ...]
-     * Redis WATCH 命令用于监视一个或多个 key，如果在事务执行之前这些 key 被其他命令所改动，那么事务将被打断。
-     *
-     * @param keys 要监视的键
-     * @return 成功返回 OK
+     * @deprecated 此方法在池化连接模式下无法正确工作，因为 WATCH 和后续事务会在不同连接上执行。
+     * 请使用 {@link #withTransaction(List, Function)} 替代。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Void> watch(List<String> keys) {
-        return api(api -> api.watch(keys)
-                             .compose(response -> {
-                                 if ("OK".equals(response.toString())) {
-                                     return Future.succeededFuture();
-                                 } else {
-                                     return Future.failedFuture(new RuntimeException(response.toString()));
-                                 }
-                             }));
+        throw new UnsupportedOperationException("Use withTransaction(watchKeys, function) instead");
     }
 
     /**
-     * UNWATCH
-     * Redis UNWATCH 命令用于取消 WATCH 命令对所有 key 的监视。
-     *
-     * @return 成功返回 OK
+     * @deprecated 此方法在池化连接模式下无法正确工作。
+     * 请使用 {@link #withTransaction(List, Function)} 替代。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Void> unwatch() {
-        return api(api -> api.unwatch()
-                             .compose(response -> {
-                                 if ("OK".equals(response.toString())) {
-                                     return Future.succeededFuture();
-                                 } else {
-                                     return Future.failedFuture(new RuntimeException(response.toString()));
-                                 }
-                             }));
+        throw new UnsupportedOperationException("Use withTransaction(watchKeys, function) instead");
     }
 
     enum ValueType {
