@@ -1,8 +1,10 @@
 # Jekyll site for GitHub Pages (source: /docs)
-# Theme: https://github.com/pages-themes/merlot
+# Merlot（官方支持）：https://github.com/pages-themes/merlot
+# 使用 remote_theme + jekyll-remote-theme，与 GitHub 文档「托管在 GitHub 上的主题」写法一致，
+# 且与 actions/jekyll-build-pages（github-pages gem）白名单一致；@v0.2.0 与 Pages 依赖锁定版本相同。
 title: Keel Redis
 description: Keel Integration for Redis — 使用说明与 API 导引
-theme: jekyll-theme-merlot
+remote_theme: pages-themes/merlot@v0.2.0
 
 # Project Pages: https://<user>.github.io/<repo>/
 url: "https://sinri.github.io"
@@ -18,6 +20,7 @@ kramdown:
 
 # GitHub Pages 允许的插件子集；与 actions/jekyll-build-pages 内置环境一致
 plugins:
+  - jekyll-remote-theme
   - jekyll-optional-front-matter
   - jekyll-default-layout
   - jekyll-relative-links
