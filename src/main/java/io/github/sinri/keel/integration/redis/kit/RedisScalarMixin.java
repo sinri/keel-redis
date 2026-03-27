@@ -374,7 +374,7 @@ interface RedisScalarMixin extends RedisApiMixin {
      * @param useKeys      如果为true，key1和key2是Redis键；否则它们是直接的字符串值
      * @param returnLength 如果为true，仅返回LCS的长度而非实际子序列
      * @return 根据returnLength参数返回最长公共子序列或其长度
-     * @deprecated STRALGO 命令在 Redis 7.0 中已被移除。请使用 {@link #getLCS(String, String)} 或 {@link #getLCSLength(String, String)} 替代。
+     * @deprecated STRALGO 命令在 Redis 7.0 中已被移除。请使用 {@link RedisScalarMixin#getLCS(String, String)} 或 {@link RedisScalarMixin#getLCSLength(String, String)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Object> getLongestCommonSubsequenceUsingStrAlgo(String key1, String key2, boolean useKeys, boolean returnLength) {

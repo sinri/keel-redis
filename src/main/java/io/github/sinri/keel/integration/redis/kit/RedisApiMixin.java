@@ -4,7 +4,6 @@ import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
-import io.vertx.redis.client.RedisConnection;
 import io.vertx.redis.client.Request;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -101,14 +100,14 @@ interface RedisApiMixin {
 
                          return setup
                                  .compose(v -> txApi.multi().mapEmpty())
-                                 .<T>compose(v -> function.apply(txApi)
-                                         .recover(userErr -> txApi.discard()
+                                 .compose(v -> function.apply(txApi)
+                                                       .recover(userErr -> txApi.discard()
                                                  .recover(discardErr -> null)
-                                                 .compose(ignored -> Future.<T>failedFuture(userErr))))
+                                                 .compose(ignored -> Future.failedFuture(userErr))))
                                  .compose(result -> txApi.exec()
                                          .compose(execResponse -> {
                                              if (execResponse == null) {
-                                                 return Future.<T>failedFuture(
+                                                 return Future.failedFuture(
                                                          new RuntimeException("事务被打断（WATCH 的 key 已被修改）"));
                                              }
                                              return Future.succeededFuture(result);
@@ -403,9 +402,9 @@ interface RedisApiMixin {
                          return conn.send(request)
                                     .compose(response -> {
                                         if ("OK".equals(response.toString())) {
-                                            return Future.<Void>succeededFuture();
+                                            return Future.succeededFuture();
                                         } else {
-                                            return Future.<Void>failedFuture(new RuntimeException(response.toString()));
+                                            return Future.failedFuture(new RuntimeException(response.toString()));
                                         }
                                     })
                                     .andThen(ar -> conn.close());
@@ -867,7 +866,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，返回的 ID 对应的连接会立即归还连接池，因此该 ID 无实际用途。
-     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT ID。
+     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT ID。
      */
     @Deprecated(since = "5.0.0")
     default Future<Long> clientId() {
@@ -917,7 +916,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，设置的名字会随连接归还而失效。
-     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT SETNAME。
+     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT SETNAME。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> clientSetname(String connectionName) {
@@ -926,7 +925,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 在池化连接模式下，获取的连接名对应的连接会立即归还连接池。
-     * 请使用 {@link #withConnection(Function)} 在独占连接上执行 CLIENT GETNAME。
+     * 请使用 {@link RedisApiMixin#withConnection(Function)} 在独占连接上执行 CLIENT GETNAME。
      */
     @Deprecated(since = "5.0.0")
     default Future<String> clientGetname() {
@@ -1044,7 +1043,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作，因为 MULTI 和后续命令会在不同连接上执行。
-     * 请使用 {@link #withTransaction(Function)} 替代。
+     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> multi() {
@@ -1053,7 +1052,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link #withTransaction(Function)} 替代。
+     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<List<@Nullable Object>> exec() {
@@ -1062,7 +1061,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link #withTransaction(Function)} 替代。
+     * 请使用 {@link RedisApiMixin#withTransaction(Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> discard() {
@@ -1071,7 +1070,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作，因为 WATCH 和后续事务会在不同连接上执行。
-     * 请使用 {@link #withTransaction(List, Function)} 替代。
+     * 请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> watch(List<String> keys) {
@@ -1080,7 +1079,7 @@ interface RedisApiMixin {
 
     /**
      * @deprecated 此方法在池化连接模式下无法正确工作。
-     * 请使用 {@link #withTransaction(List, Function)} 替代。
+     * 请使用 {@link RedisApiMixin#withTransaction(List, Function)} 替代。
      */
     @Deprecated(since = "5.0.0")
     default Future<Void> unwatch() {
