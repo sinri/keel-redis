@@ -200,7 +200,9 @@ interface RedisHashMixin extends RedisApiMixin {
      * @param pattern 匹配的模式
      * @param count   指定从数据集里返回多少元素，默认值为 10
      * @return 包含两个元素的列表，第一个元素是用于下一次迭代的新游标，第二个元素是包含匹配元素的列表
+     * @deprecated 返回弱类型 Map，请使用 {@link RedisApiMixin#hscan(String, String, String, Integer)} 替代，返回强类型 HScanResult。
      */
+    @Deprecated(since = "5.0.0")
     default Future<Map<String, Object>> scanHash(String key, String cursor, @Nullable String pattern, @Nullable Integer count) {
         return api(api -> {
             List<String> args = new ArrayList<>();

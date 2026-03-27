@@ -103,10 +103,14 @@ Vert.x Redis 客户端本身支持连接池，`RedisConfig` 也配置了 `maxPoo
 
 `getLongestCommonSubsequenceUsingStrAlgo` 和 `getLongestCommonSubsequenceWithIdxWithStrAlgo` 使用 `STRALGO` 命令，该命令在 Redis 7.0 中已被移除。虽然提供了 `getLCS` 替代方法，但旧方法未标记 `@Deprecated`。
 
+**结论**: 已修复。为两个 STRALGO 方法添加 `@Deprecated(since = "5.0.0")` 注解，引导用户使用 `getLCS` / `getLCSLength` 替代。
+
 ### 10. `scanHash` 与 `hscan` 功能重复
 **文件**: `RedisHashMixin.java:204-231` vs `RedisApiMixin.java:664-698`
 
 `RedisHashMixin.scanHash()` 返回 `Map<String, Object>`（弱类型），而 `RedisApiMixin.hscan()` 返回强类型的 `HScanResult`。两者功能完全相同，前者的返回类型设计更差。
+
+**结论**: 已修复。为 `scanHash()` 添加 `@Deprecated(since = "5.0.0")` 注解，引导用户使用强类型的 `hscan()` 替代。
 
 ---
 
