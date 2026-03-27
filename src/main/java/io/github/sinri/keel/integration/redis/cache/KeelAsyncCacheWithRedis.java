@@ -10,6 +10,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 基于 Redis 的异步缓存实现。
@@ -18,6 +20,7 @@ import java.util.function.Function;
  */
 @NullMarked
 public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, String> {
+    private static final Logger logger = Logger.getLogger(KeelAsyncCacheWithRedis.class.getName());
     public static final long DEFAULT_LIFE_IN_SECONDS = 60;
 
     private final RedisKit redisKit;
@@ -39,8 +42,7 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
                                 if (Objects.isNull(value)) {
                                     return Future.failedFuture(new NotCached("Value is null"));
                                 }
-                                String s = Objects.requireNonNull(value);
-                                return Future.succeededFuture(s);
+                                return Future.succeededFuture(value);
                             });
     }
 
@@ -64,13 +66,12 @@ public class KeelAsyncCacheWithRedis implements KeelAsyncCacheInterface<String, 
     @Override
     public Future<String> read(String key, Function<String, Future<String>> generator, long lifeInSeconds) {
         return this.read(key)
-                   .compose(s -> {
-                       Objects.requireNonNull(s);
-                       return Future.succeededFuture(s);
-                   })
                    .recover(throwable -> generator.apply(key)
                                                   .compose(v -> save(key, v, lifeInSeconds)
-                                                          .recover(saveFailed -> Future.succeededFuture())
+                                                          .recover(saveFailed -> {
+                                                              logger.log(Level.WARNING, "Failed to save cache for key: " + key, saveFailed);
+                                                              return Future.succeededFuture();
+                                                          })
                                                           .compose(anyway -> Future.succeededFuture(v))));
     }
 

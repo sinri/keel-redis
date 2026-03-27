@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Redis API 调用中 Hash 相关的 Mixin。
@@ -75,9 +76,18 @@ interface RedisHashMixin extends RedisApiMixin {
                 return Future.succeededFuture(map);
             }
 
-            for (int i = 0; i < response.size(); i += 2) {
-                if (i + 1 < response.size()) {
-                    map.put(response.get(i).toString(), response.get(i + 1).toString());
+            Set<String> keys = response.getKeys();
+            if (keys != null) {
+                // RESP3: response is a map, iterate by key
+                for (String field : keys) {
+                    map.put(field, response.get(field).toString());
+                }
+            } else {
+                // RESP2: response is a flat array [field, value, field, value, ...]
+                for (int i = 0; i < response.size(); i += 2) {
+                    if (i + 1 < response.size()) {
+                        map.put(response.get(i).toString(), response.get(i + 1).toString());
+                    }
                 }
             }
 

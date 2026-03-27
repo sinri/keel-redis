@@ -121,6 +121,8 @@ Vert.x Redis 客户端本身支持连接池，`RedisConfig` 也配置了 `maxPoo
 
 `RENAMENX` 返回的是整数 `1`（成功）或 `0`（newkey 已存在），不是 `"OK"` 字符串。当前实现在 newkey 已存在时会抛出异常（因为返回 `0` 而不是 `"OK"`），而非正常返回失败状态。
 
+**结论**: 已修复。返回类型改为 `Future<Boolean>`，通过 `response.toInteger() == 1` 判断成功/失败，不再抛出异常。
+
 ### 12. `KeelAsyncCacheWithRedis.read` 中的冗余 null 检查
 **文件**: `KeelAsyncCacheWithRedis.java:39-43`
 ```java
@@ -132,6 +134,8 @@ return Future.succeededFuture(s);
 ```
 `Objects.isNull` 已处理 null 情况，之后的 `Objects.requireNonNull` 完全冗余。
 
+**结论**: 已修复。移除 `Objects.requireNonNull(value)` 冗余调用，同时移除 `read(key, generator, lifeInSeconds)` 中另一处冗余的 `Objects.requireNonNull` 链。
+
 ### 13. `KeelAsyncCacheWithRedis.read(key, generator, lifeInSeconds)` 吞掉保存失败异常
 **文件**: `KeelAsyncCacheWithRedis.java:71-74`
 ```java
@@ -142,15 +146,21 @@ return Future.succeededFuture(s);
 ```
 缓存写入失败被静默忽略，没有任何日志记录，排查问题时会很困难。
 
+**结论**: 已修复。添加 `java.util.logging.Logger` 在缓存写入失败时记录 WARNING 级别日志，包含 key 名和异常信息。
+
 ### 14. `getAllHashFields` 手动解析可能有问题
 **文件**: `RedisHashMixin.java:71-86`
 
 Vert.x 的 `HGETALL` 响应在 RESP3 协议下已经是 Map 格式，不需要手动按索引配对。当前的 `i += 2` 解析方式在 RESP3 模式下可能得到错误结果。
 
+**结论**: 已修复。通过 `response.getKeys()` 检测响应格式：RESP3 Map 格式时按 key 遍历，RESP2 数组格式时保留原有 `i += 2` 解析逻辑。
+
 ### 15. 多处方法参数使用 String 而非枚举
 - `blockingMoveElementBetweenLists` 的 `from`/`to` 参数接受 `"LEFT"` / `"RIGHT"` 字符串，应使用枚举
 - `getex` 的 `expireOption` 参数接受字符串，应使用枚举
 - `clientList` 的 `type` 参数接受字符串，应使用枚举
+
+**结论**: 已修复。新增 `ListDirection`（LEFT/RIGHT）、`ExpireOption`（EX/PX/EXAT/PXAT/PERSIST）、`ClientType`（normal/master/replica/pubsub）三个枚举，并为 `blockingMoveElementBetweenLists`、`moveElementBetweenLists`、`getex`、`clientList` 添加枚举参数重载方法。原有字符串参数方法保留以兼容。
 
 ---
 

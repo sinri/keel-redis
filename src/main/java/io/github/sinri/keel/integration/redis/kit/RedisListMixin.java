@@ -454,4 +454,33 @@ interface RedisListMixin extends RedisApiMixin {
                                  return Future.succeededFuture(response.toString());
                              }));
     }
+
+    /**
+     * 列表方向枚举，用于 LMOVE / BLMOVE 命令。
+     *
+     * @since 5.0.0
+     */
+    enum ListDirection {
+        LEFT, RIGHT
+    }
+
+    /**
+     * BLMOVE 的枚举参数版本。
+     *
+     * @see #blockingMoveElementBetweenLists(String, String, String, String, long)
+     * @since 5.0.0
+     */
+    default Future<String> blockingMoveElementBetweenLists(String source, String destination, ListDirection from, ListDirection to, long timeout) {
+        return blockingMoveElementBetweenLists(source, destination, from.name(), to.name(), timeout);
+    }
+
+    /**
+     * LMOVE 的枚举参数版本。
+     *
+     * @see #moveElementBetweenLists(String, String, String, String)
+     * @since 5.0.0
+     */
+    default Future<String> moveElementBetweenLists(String source, String destination, ListDirection from, ListDirection to) {
+        return moveElementBetweenLists(source, destination, from.name(), to.name());
+    }
 }

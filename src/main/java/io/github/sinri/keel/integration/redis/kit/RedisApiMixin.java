@@ -347,13 +347,9 @@ interface RedisApiMixin {
      * Redis Renamenx 命令用于在新的 key 不存在时修改 key 的名称 。若 key 不存在返回错误。
      * 在集群模式下，key 和newkey 需要在同一个 hash slot。key 和newkey有相同的 hash tag 才能重命名。
      */
-    default Future<Void> renameKeyIfNewKeyNotExists(String oldKey, String newKey) {
+    default Future<Boolean> renameKeyIfNewKeyNotExists(String oldKey, String newKey) {
         return api(api -> api.renamenx(oldKey, newKey).compose(response -> {
-            if ("OK".equals(response.toString())) {
-                return Future.succeededFuture();
-            } else {
-                throw new RuntimeException(response.toString());
-            }
+            return Future.succeededFuture(response.toInteger() == 1);
         }));
     }
 
@@ -709,6 +705,19 @@ interface RedisApiMixin {
     }
 
     /**
+     * GETEX 的枚举参数版本。
+     *
+     * @param key          键名
+     * @param expireOption 过期选项枚举
+     * @param expireValue  过期值，当使用 PERSIST 时可为 null
+     * @return 指定键的值，如果键不存在则返回 null
+     * @since 5.0.0
+     */
+    default Future<@Nullable String> getex(String key, ExpireOption expireOption, @Nullable Long expireValue) {
+        return getex(key, expireOption.name(), expireValue);
+    }
+
+    /**
      * GETSET key value
      * Redis GETSET 命令用于设置指定键的值，并返回该键的旧值。
      * 如果键不存在，则返回 null。
@@ -893,6 +902,17 @@ interface RedisApiMixin {
                           .compose(response -> Future.succeededFuture(response.toString()));
             }
         });
+    }
+
+    /**
+     * CLIENT LIST 的枚举参数版本。
+     *
+     * @param type 客户端类型枚举
+     * @return 客户端列表信息
+     * @since 5.0.0
+     */
+    default Future<String> clientList(ClientType type) {
+        return clientList(type.name());
     }
 
     /**
@@ -1177,5 +1197,32 @@ interface RedisApiMixin {
         public double getScore() {
             return score;
         }
+    }
+
+    /**
+     * GETEX 命令的过期选项枚举。
+     *
+     * @since 5.0.0
+     */
+    enum ExpireOption {
+        /** 设置过期时间（秒） */
+        EX,
+        /** 设置过期时间（毫秒） */
+        PX,
+        /** 设置过期时间为 Unix 时间戳（秒） */
+        EXAT,
+        /** 设置过期时间为 Unix 时间戳（毫秒） */
+        PXAT,
+        /** 移除过期时间 */
+        PERSIST
+    }
+
+    /**
+     * CLIENT LIST 命令的客户端类型枚举。
+     *
+     * @since 5.0.0
+     */
+    enum ClientType {
+        normal, master, replica, pubsub
     }
 }
